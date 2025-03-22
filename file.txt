@@ -1,0 +1,165 @@
+To maintain uniformity across your components and make it easier to update styles from a single place, you can extract reusable Tailwind CSS classes into a central configuration file or a constants file. Below is a list of commonly used Tailwind CSS classes from the provided code that can be reused across components:
+
+Extracted Tailwind CSS Classes
+1. Parent Container
+js
+Copy
+"flex-1 mt-4 overflow-x-auto"
+Used for the main container of the component.
+
+Ensures consistent padding, layout, and overflow behavior.
+
+2. Search and Button Layout
+js
+Copy
+"flex justify-between items-center mb-6"
+Used for the container that holds the search input and the "Add New" button.
+
+Ensures consistent spacing and alignment.
+
+3. Buttons
+Primary Button (e.g., "Add New"):
+
+js
+Copy
+"bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
+Secondary Button (e.g., "Cancel"):
+
+js
+Copy
+"bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
+Danger Button (e.g., "Delete"):
+
+js
+Copy
+"bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
+Edit Button:
+
+js
+Copy
+"text-green-500 border border-green-500 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-green-50 transition-colors"
+Delete Button:
+
+js
+Copy
+"text-red-500 border border-red-500 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-red-50 transition-colors"
+4. Input Fields
+js
+Copy
+"w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 hover:border-green-500 transition duration-200"
+Used for text inputs, selects, and textareas.
+
+Ensures consistent styling for form fields.
+
+5. Modal Container
+js
+Copy
+"fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50"
+Used for modal overlays.
+
+Ensures consistent positioning and background.
+
+6. Modal Content
+js
+Copy
+"bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl"
+Used for the content inside modals.
+
+Ensures consistent padding, width, and shadow.
+
+7. Table Styling
+Table Container:
+
+js
+Copy
+"w-full border-collapse border border-gray-300"
+Table Header:
+
+js
+Copy
+"bg-gray-200 border p-2"
+Table Cell:
+
+js
+Copy
+"border p-2"
+8. Error Messages
+js
+Copy
+"text-red-500 text-sm"
+Used for displaying validation errors.
+
+Ensures consistent error message styling.
+
+9. Flex Layouts
+Flex Row with Gap:
+
+js
+Copy
+"flex justify-end gap-2"
+Grid Layout (2 Columns):
+
+js
+Copy
+"grid grid-cols-2 gap-4"
+How to Use These Classes
+You can create a constants.js file to store these reusable classes. For example:
+
+constants.js
+javascript
+Copy
+export const TW_CLASSES = {
+  PARENT_CONTAINER: "flex-1 mt-4 overflow-x-auto",
+  SEARCH_BUTTON_LAYOUT: "flex justify-between items-center mb-6",
+  BUTTON_PRIMARY: "bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors",
+  BUTTON_SECONDARY: "bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors",
+  BUTTON_DANGER: "bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors",
+  BUTTON_EDIT: "text-green-500 border border-green-500 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-green-50 transition-colors",
+  BUTTON_DELETE: "text-red-500 border border-red-500 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-red-50 transition-colors",
+  INPUT_FIELD: "w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 hover:border-green-500 transition duration-200",
+  MODAL_OVERLAY: "fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50",
+  MODAL_CONTENT: "bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl",
+  TABLE_CONTAINER: "w-full border-collapse border border-gray-300",
+  TABLE_HEADER: "bg-gray-200 border p-2",
+  TABLE_CELL: "border p-2",
+  ERROR_MESSAGE: "text-red-500 text-sm",
+  FLEX_ROW_GAP: "flex justify-end gap-2",
+  GRID_2_COL: "grid grid-cols-2 gap-4",
+};
+Usage in Components
+Import the TW_CLASSES object and use it in your components. For example:
+
+javascript
+Copy
+import { TW_CLASSES } from "./constants";
+
+const MyComponent = () => {
+  return (
+    <div className={TW_CLASSES.PARENT_CONTAINER}>
+      <div className={TW_CLASSES.SEARCH_BUTTON_LAYOUT}>
+        <SearchInput />
+        <button className={TW_CLASSES.BUTTON_PRIMARY}>Add New</button>
+      </div>
+      <table className={TW_CLASSES.TABLE_CONTAINER}>
+        <thead>
+          <tr>
+            <th className={TW_CLASSES.TABLE_HEADER}>Header</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className={TW_CLASSES.TABLE_CELL}>Data</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+};
+Benefits
+Consistency: Ensures all components use the same styles.
+
+Maintainability: Update styles in one place (constants.js) to reflect changes across all components.
+
+Readability: Makes the code cleaner and easier to understand.
+
+By centralizing these classes, you can easily tweak the design system without modifying individual components.
