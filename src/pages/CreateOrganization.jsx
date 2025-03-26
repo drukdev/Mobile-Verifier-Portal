@@ -3,10 +3,10 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AddOrganizationModal from "./AddOrganizationModal";
 import TableComponent from "../components/TableComponent";
-import SearchInput from "../components/SearchInput";
-import { useForm } from "react-hook-form";
+import { useAuth } from "../context/AuthContext";
 
 const CreateOrganization = () => {
+  const { isAuthenticated, logout } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,54 +16,73 @@ const CreateOrganization = () => {
   const [selectedOrganization, setSelectedOrganization] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Function to play sound
   const playSound = (soundFile) => {
     const audio = new Audio(soundFile);
     audio.play();
   };
 
-  // Fetch organizations from the API
+  const handleUnauthorized = () => {
+    toast.error("Session expired. Please login again.");
+    logout();
+  };
+
   const fetchOrganizations = async () => {
+    if (!isAuthenticated) return;
+
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("http://127.0.0.1:8000/organizations");
-      const data = await response.json();
-      if (response.ok) {
-        setOrganizations(data);
-      } else {
-        throw new Error(data.detail || "Failed to fetch organizations");
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("https://staging.bhutanndi.com/ndi-mobile-verifier/v1/organization", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
       }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to fetch organizations");
+      }
+
+      const data = await response.json();
+      setOrganizations(data.data?.[1] || []);
     } catch (error) {
       setError(error.message);
       playSound("/sounds/failure.mp3");
       toast.error(error.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchOrganizations();
-  }, []);
+  }, [isAuthenticated]);
 
-  // Handle edit action
   const handleEdit = (organization) => {
     setSelectedOrganization(organization);
     setIsEditModalOpen(true);
   };
 
-  // Handle delete action
   const handleDelete = (organizationId) => {
-    setSelectedOrganization(organizations.find((org) => org.organizationId === organizationId));
+    setSelectedOrganization(organizations.find((org) => org.orgId === organizationId));
     setIsDeleteModalOpen(true);
   };
 
-  // Confirm delete action
   const confirmDelete = async () => {
-    const token = localStorage.getItem("jwtToken");
+    if (!isAuthenticated) return;
+
     try {
+      const token = localStorage.getItem("authToken");
       const response = await fetch(
-        `http://127.0.0.1:8000/organizations/${selectedOrganization.organizationId}`,
+        `https://staging.bhutanndi.com/ndi-mobile-verifier/v1/organization/${selectedOrganization.orgId}`,
         {
           method: "DELETE",
           headers: {
@@ -71,13 +90,20 @@ const CreateOrganization = () => {
           },
         }
       );
-      if (response.ok) {
-        playSound("/sounds/success.mp3");
-        toast.success("Organization deleted successfully");
-        fetchOrganizations();
-      } else {
-        throw new Error("Failed to delete organization");
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
       }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to delete organization");
+      }
+
+      playSound("/sounds/success.mp3");
+      toast.success("Organization deleted successfully");
+      await fetchOrganizations();
     } catch (error) {
       playSound("/sounds/failure.mp3");
       toast.error(error.message);
@@ -85,65 +111,22 @@ const CreateOrganization = () => {
     setIsDeleteModalOpen(false);
   };
 
-  // Handle form submission for adding a new organization
-  const handleAddOrganization = async (newOrganization) => {
-    const token = localStorage.getItem("jwtToken");
-    try {
-      const response = await fetch("http://127.0.0.1:8000/organizations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(newOrganization),
-      });
-      if (response.ok) {
-        playSound("/sounds/success.mp3");
-        toast.success("Organization added successfully");
-        fetchOrganizations();
-      } else {
-        throw new Error("Failed to add organization");
-      }
-    } catch (error) {
-      playSound("/sounds/failure.mp3");
-      toast.error(error.message);
-    }
+  const handleAddSuccess = async () => {
+    await fetchOrganizations();
+    playSound("/sounds/success.mp3");
+    toast.success("Organization added successfully");
   };
 
-  // Handle form submission for editing an organization
-  const handleEditOrganization = async (updatedOrganization) => {
-    const token = localStorage.getItem("jwtToken");
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/organizations/${updatedOrganization.organizationId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updatedOrganization),
-        }
-      );
-      if (response.ok) {
-        playSound("/sounds/success.mp3");
-        toast.success("Organization updated successfully");
-        fetchOrganizations();
-      } else {
-        throw new Error("Failed to update organization");
-      }
-    } catch (error) {
-      playSound("/sounds/failure.mp3");
-      toast.error(error.message);
-    }
-    setIsEditModalOpen(false);
+  const handleEditSuccess = async () => {
+    await fetchOrganizations();
+    playSound("/sounds/success.mp3");
+    toast.success("Organization updated successfully");
   };
 
-  // Define columns for the table
   const columns = [
-    { accessorKey: "organizationId", header: "Organization ID" },
-    { accessorKey: "organizationName", header: "Organization Name" },
-    { accessorKey: "serviceUrl", header: "Service URL" },
+    { accessorKey: "orgId", header: "Organization ID" },
+    { accessorKey: "orgName", header: "Organization Name" },
+    { accessorKey: "url", header: "Service URL" },
     { accessorKey: "publicDid", header: "Public DID" },
     {
       id: "actions",
@@ -156,39 +139,45 @@ const CreateOrganization = () => {
           >
             Edit
           </button>
-          <button
-            onClick={() => handleDelete(row.original.organizationId)}
-            className="text-red-500 border border-red-500 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-red-50 transition-colors"
-          >
-            Delete
-          </button>
         </div>
       ),
     },
   ];
-
+// flex flex-col md:flex-row gap-4 mb-4 px-1 py-4 bg-gray-50 rounded-lg
   return (
     <div className="flex-1 mt-4 overflow-x-auto">
       <ToastContainer position="top-right" autoClose={3000} />
       
-      {/* Header (Search & Add Button) */}
-      <div className="flex justify-between items-center mb-6">
-        <SearchInput
-          value={globalFilter}
-          onChange={setGlobalFilter}
-          placeholder="Search organizations..."
-        />
-        <button
-          className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
-          onClick={() => setIsModalOpen(true)}
-        >
-          Add New Organization
-        </button>
+      {/* Updated Search and Add Organization Section */}
+      <div className="flex flex-col md:flex-row gap-4 mb-4">
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-gray-500 mb-1">Search Organizations</label>
+          <div className="relative w-full">
+            <input
+              type="text"
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder="Search organizations..."
+              className="w-full px-4 py-2 pl-10 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 transition duration-200"
+            />
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              🔍
+            </span>
+          </div>
+        </div>
+        <div className="flex items-end">
+          <button
+            className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors h-[42px]"
+            onClick={() => setIsModalOpen(true)}
+            disabled={!isAuthenticated}
+          >
+            Add New Organization
+          </button>
+        </div>
       </div>
 
-      {/* Table */}
       {loading ? (
-        <p className="text-center text-gray-500">Loading...</p>
+        <p className="text-center pt-8 text-gray-500">Loading Organizations...</p>
       ) : error ? (
         <p className="text-center text-red-500">{error}</p>
       ) : organizations.length === 0 ? (
@@ -202,24 +191,21 @@ const CreateOrganization = () => {
         />
       )}
 
-      {/* Add Organization Modal */}
       <AddOrganizationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleAddOrganization}
+        onSuccess={handleAddSuccess}
       />
 
-      {/* Edit Organization Modal */}
       {isEditModalOpen && (
         <AddOrganizationModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           organization={selectedOrganization}
-          onSubmit={handleEditOrganization}
+          onSuccess={handleEditSuccess}
         />
       )}
 
-      {/* Styled Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
@@ -228,7 +214,7 @@ const CreateOrganization = () => {
             </h2>
             <p className="text-gray-600 text-center">
               Are you sure you want to delete{" "}
-              <strong className="text-red-600">{selectedOrganization?.organizationName}</strong>?
+              <strong className="text-red-600">{selectedOrganization?.orgName}</strong>?
             </p>
             <div className="flex justify-center mt-6 space-x-4">
               <button

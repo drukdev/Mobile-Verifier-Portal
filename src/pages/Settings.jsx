@@ -1,9 +1,16 @@
-import React from 'react'
+import React from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Settings = () => {
-  return (
-    <div>Settings</div>
-  )
-}
+  const notify = () => toast("Wow so easy!");
 
-export default Settings
+  return (
+    <div>
+      <button onClick={notify}>Notify!</button>
+      <ToastContainer />
+    </div>
+  );
+};
+
+export default Settings;

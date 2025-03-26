@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
+const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
   const [formData, setFormData] = useState({
     organizationName: "",
     organizationId: "",
@@ -15,10 +15,19 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
     publicDid: "",
   });
 
-  // Pre-fill form if editing an organization
   useEffect(() => {
     if (organization) {
-      setFormData(organization);
+      setFormData({
+        organizationName: organization.orgName || "",
+        organizationId: organization.orgId || "",
+        logoUrl: organization.logoURL || "",
+        serviceUrl: organization.url || "",
+        clientId: organization.authentication?.data?.client_id || "",
+        clientSecret: organization.authentication?.data?.client_secret || "",
+        grantType: organization.authentication?.data?.grant_type || "",
+        authenticationUrl: organization.authentication?.data?.url || "",
+        publicDid: organization.publicDid || "",
+      });
     } else {
       setFormData({
         organizationName: "",
@@ -42,31 +51,54 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
     e.preventDefault();
 
     try {
-      const url = organization
-        ? `http://127.0.0.1:8000/organizations/${formData.organizationId}`
-        : "http://127.0.0.1:8000/organizations";
-      const method = organization ? "PUT" : "POST";
+      const auth = {
+        type: "OAuth2",
+        version: "v1",
+        data: {
+          url: formData.authenticationUrl,
+          grant_type: formData.grantType,
+          client_id: formData.clientId,
+          client_secret: formData.clientSecret,
+        }
+      };
 
+      const payload = {
+        orgId: formData.organizationId,
+        orgName: formData.organizationName,
+        publicDid: formData.publicDid,
+        logoURL: formData.logoUrl,
+        url: formData.serviceUrl,
+        authentication: auth
+      };
+
+      const url = organization
+        ? `https://staging.bhutanndi.com/ndi-mobile-verifier/v1/organization/${formData.organizationId}`
+        : "https://staging.bhutanndi.com/ndi-mobile-verifier/v1/organization";
+      
+      const method = organization ? "PATCH" : "POST";
+      const token = localStorage.getItem("authToken");
+      
       const response = await fetch(url, {
         method: method,
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
-      if (response.ok) {
-        toast.success(
-          organization
-            ? "Organization updated successfully!"
-            : "Organization added successfully!"
-        );
-        onSubmit(formData); // Pass the updated/added organization to the parent component
-        onClose(); // Close modal on success
-      } else {
-        const data = await response.json();
-        throw new Error(data.detail || "Failed to process request");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to process request");
       }
+
+      toast.success(
+        organization
+          ? "Organization updated successfully!"
+          : "Organization added successfully!"
+      );
+      onSuccess();
+      onClose();
     } catch (error) {
       toast.error(error.message || "Network error, please try again!");
     }
@@ -77,7 +109,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-[600px]">
-        {/* Modal Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-800">
             {organization ? "Edit Organization" : "Add New Organization"}
@@ -90,9 +121,7 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
           </button>
         </div>
 
-        {/* Modal Form */}
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-          {/* Organization Name */}
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Organization Name
@@ -102,12 +131,11 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
               name="organizationName"
               value={formData.organizationName}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200"
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200"
               required
             />
           </div>
 
-          {/* Organization ID */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Organization ID
@@ -119,11 +147,10 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200"
               required
-              disabled={!!organization} // Disable if editing
+              disabled={!!organization}
             />
           </div>
 
-          {/* Logo URL */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Logo URL
@@ -137,7 +164,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
             />
           </div>
 
-          {/* Service URL */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Service URL
@@ -152,7 +178,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
             />
           </div>
 
-          {/* Client ID */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Client ID
@@ -162,12 +187,11 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
               name="clientId"
               value={formData.clientId}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200"
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200"
               required
             />
           </div>
 
-          {/* Client Secret */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Client Secret
@@ -182,7 +206,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
             />
           </div>
 
-          {/* Grant Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Grant Type
@@ -197,7 +220,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
             />
           </div>
 
-          {/* Authentication URL */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Authentication URL
@@ -212,7 +234,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
             />
           </div>
 
-          {/* Public DID */}
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Public DID
@@ -227,7 +248,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSubmit }) => {
             />
           </div>
 
-          {/* Action Buttons */}
           <div className="col-span-2 flex justify-end space-x-2 mt-6">
             <button
               type="button"

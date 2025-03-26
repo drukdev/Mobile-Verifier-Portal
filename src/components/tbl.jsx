@@ -27,18 +27,18 @@ const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
       },
     },
   });
-  //bg-white p-4 rounded-lg shadow-md
+
   return (
-    <div className="">
+    <div className="bg-white p-4 rounded-lg shadow-md">
       {/* Table */}
-      <table className="w-full text-sm border-collapse border rounded-lg border-gray-300">
+      <table className="w-full text-sm border-collapse">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id} className="bg-gray-100 text-left">
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="p-2 pl-4 border border-gray-300 font-medium text-gray-700 text-sm" // Added `pl-4` for left padding
+                  className="p-3 border-b border-gray-300 font-medium text-gray-700"
                   onClick={header.column.getToggleSortingHandler()}
                 >
                   <div className="flex items-center">
@@ -64,7 +64,7 @@ const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
               {row.getVisibleCells().map((cell) => (
                 <td
                   key={cell.id}
-                  className="p-2 pl-4 border border-gray-300 text-gray-700 text-sm" // Added `pl-4` for left padding
+                  className="p-3 border-b border-gray-200 text-gray-700"
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>

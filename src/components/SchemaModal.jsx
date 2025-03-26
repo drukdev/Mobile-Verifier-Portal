@@ -1,4 +1,3 @@
-// components/SchemaModal.jsx
 import React from "react";
 
 const SchemaModal = ({
@@ -18,8 +17,7 @@ const SchemaModal = ({
   return (
     <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl">
-        <h3 className="text-xl font-semibold mb-4">Add/Edit Schema</h3>
-        {/* Schema Name and URL */}
+        <h3 className="text-xl font-semibold mb-4">Add Schema</h3>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label htmlFor="schemaName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -48,7 +46,6 @@ const SchemaModal = ({
             />
           </div>
         </div>
-        {/* Nested Schema Fields */}
         <div className="mb-4">
           <h4 className="text-lg font-semibold mb-2">Schema Fields</h4>
           <table className="w-full border-collapse border border-gray-300">
@@ -93,10 +90,9 @@ const SchemaModal = ({
             className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium mt-4 hover:bg-emerald-600 transition-colors"
             onClick={addSchemaField}
           >
-            Insert Field
+            Insert Attributes
           </button>
         </div>
-        {/* Nested Schema Modal Footer Buttons */}
         <div className="flex justify-end gap-2">
           <button
             className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
@@ -108,9 +104,8 @@ const SchemaModal = ({
             className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors"
             onClick={saveSchemaRow}
           >
-            Create Schema
+            Save Schema
           </button>
-          
         </div>
       </div>
     </div>

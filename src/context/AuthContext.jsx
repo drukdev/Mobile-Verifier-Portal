@@ -1,4 +1,3 @@
-// src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Create the AuthContext
@@ -11,36 +10,36 @@ export const AuthProvider = ({ children }) => {
 
   // Check if the user is authenticated on initial load
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const expiryTime = localStorage.getItem('expiryTime');
+    const token = localStorage.getItem('authToken'); // Ensure this matches the key used in Login.jsx
+    const expiryTime = localStorage.getItem('authTokenExpiry'); // Ensure this matches the key used in Login.jsx
 
     if (token && expiryTime && new Date().getTime() < expiryTime) {
       setIsAuthenticated(true);
     } else {
       // Clear invalid or expired tokens
-      localStorage.removeItem('token');
-      localStorage.removeItem('expiryTime');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('authTokenExpiry');
       setIsAuthenticated(false);
     }
   }, []);
 
   // Login function
   const login = (token, expiryTime) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('expiryTime', expiryTime);
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('authTokenExpiry', expiryTime);
     setIsAuthenticated(true);
   };
 
   // Logout function
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('expiryTime');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('authTokenExpiry');
     setIsAuthenticated(false);
   };
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, role, login, logout }}>
-      {children} {/* Render children here */}
+      {children}
     </AuthContext.Provider>
   );
 };

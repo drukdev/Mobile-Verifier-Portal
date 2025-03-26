@@ -21,6 +21,8 @@ const Login = () => {
   const handleExternalAuthSubmit = async (data) => {
     const { clientId, clientSecret } = data;
     const auth_api_url = import.meta.env.VITE_AUTH_API_URL;
+    const role = import.meta.env.VITE_ROLE;
+
 
     setLoading(true);
     setError('');
@@ -31,7 +33,11 @@ const Login = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ grant_type: 'client_credentials', client_id: clientId, client_secret: clientSecret }),
+        body: JSON.stringify({
+          grant_type: 'client_credentials',
+          client_id: clientId,
+          client_secret: clientSecret,
+        }),
       });
 
       if (!response.ok) {
@@ -39,13 +45,22 @@ const Login = () => {
         throw new Error(errorData.message || 'Authentication failed');
       }
 
-      const { token, expiresIn } = await response.json();
-      const expiryTime = new Date().getTime() + expiresIn * 1000;
+      const { access_token, expires_in } = await response.json();
+      const expiryTime = new Date().getTime() + expires_in * 1000;
 
-      localStorage.setItem('authToken', token);
+      localStorage.setItem('authToken', access_token);
       localStorage.setItem('authTokenExpiry', expiryTime);
-      login(token, expiryTime);
-      navigate('/dashboard');
+      login(access_token, expiryTime);
+      if (role == "client") {
+       navigate('/dashboard/verifier-role');
+       console.log(`role: ${role}`);
+      }
+       else if (role == "admin") {
+        navigate('/dashboard/create-organization');
+       }
+        else {
+          navigate('/dashboard/')
+        }
     } catch (error) {
       setError(error.message || 'Authentication failed. Please check your credentials.');
       toast.error(error.message || 'Authentication failed. Please check your credentials.', {
@@ -63,6 +78,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex bg-white">
+      {/* Left Side: Login Form */}
       <div className="w-full md:w-1/2 flex flex-col p-6 md:p-8 pl-6 md:pl-10 bg-white">
         <div className="flex justify-start pl-1 md:pl-4">
           <img className="h-12 md:h-16 w-auto" src={logo} alt="Logo" />
@@ -77,6 +93,7 @@ const Login = () => {
             <form onSubmit={handleSubmit(handleExternalAuthSubmit)} className="mt-6 space-y-4">
               <input type="hidden" name="remember" value="true" />
               <div className="rounded-md shadow-sm -space-y-px">
+                {/* Client ID Input */}
                 <div className="mb-4">
                   <label htmlFor="clientId" className="sr-only">
                     Client ID
@@ -92,6 +109,7 @@ const Login = () => {
                     <p className="text-red-500 text-sm mt-1">{errors.clientId.message}</p>
                   )}
                 </div>
+                {/* Client Secret Input */}
                 <div className="mb-6">
                   <label htmlFor="clientSecret" className="sr-only">
                     Client Secret
@@ -108,6 +126,7 @@ const Login = () => {
                   )}
                 </div>
               </div>
+              {/* Submit Button */}
               <div className="mt-6">
                 <button
                   type="submit"
@@ -147,6 +166,8 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      {/* Right Side: Background Image */}
       <div
         className="hidden md:block w-1/2 bg-cover bg-center p-8 md:p-16 bg-white"
         style={{
