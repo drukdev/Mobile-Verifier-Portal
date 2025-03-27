@@ -1,5 +1,5 @@
 import React from "react";
-import { FaArrowUp, FaArrowDown } from "react-icons/fa"; // Import icons for sorting
+import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import {
   useReactTable,
   getCoreRowModel,
@@ -14,9 +14,9 @@ const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
     data,
     columns,
     state: {
-      globalFilter, // Pass global filter state to the table
+      globalFilter,
     },
-    onGlobalFilterChange: setGlobalFilter, // Update global filter state
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -27,54 +27,56 @@ const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
       },
     },
   });
-  //bg-white p-4 rounded-lg shadow-md
+
   return (
     <div className="">
-      {/* Table */}
-      <table className="w-full text-sm border-collapse border rounded-lg border-gray-300">
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="bg-gray-100 text-left">
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="p-2 pl-4 border border-gray-300 font-medium text-gray-700 text-sm" // Added `pl-4` for left padding
-                  onClick={header.column.getToggleSortingHandler()}
-                >
-                  <div className="flex items-center">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    {{
-                      asc: <FaArrowUp className="ml-1" />, // Use FaArrowUp icon
-                      desc: <FaArrowDown className="ml-1" />, // Use FaArrowDown icon
-                    }[header.column.getIsSorted()] ?? null}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row, index) => (
-            <tr
-              key={row.id}
-              className={`hover:bg-gray-50 ${
-                index % 2 === 0 ? "bg-white" : "bg-gray-50"
-              }`}
-            >
-              {row.getVisibleCells().map((cell) => (
-                <td
-                  key={cell.id}
-                  className="p-2 pl-4 border border-gray-300 text-gray-700 text-sm" // Added `pl-4` for left padding
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Wrapper div for proper rounded corners */}
+      <div className="overflow-hidden rounded-lg border border-gray-300">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id} className="bg-gray-100 text-left">
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    className="p-2 pl-4 border border-gray-300 font-medium text-gray-700 text-sm"
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
+                    <div className="flex items-center">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {{
+                        asc: <FaArrowUp className="ml-1" />,
+                        desc: <FaArrowDown className="ml-1" />,
+                      }[header.column.getIsSorted()] ?? null}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map((row, index) => (
+              <tr
+                key={row.id}
+                className={`hover:bg-gray-50 ${
+                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                }`}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    className="p-2 pl-4 border border-gray-300 text-gray-700 text-sm"
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      {/* Pagination */}
+      {/* Pagination (unchanged) */}
       <div className="pagination mt-4 flex justify-between items-center">
         <div className="flex gap-2">
           <button

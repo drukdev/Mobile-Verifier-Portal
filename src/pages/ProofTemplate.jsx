@@ -72,7 +72,7 @@ const ProofTemplate = () => {
       console.log(`role ${selectedOrgRole} and org ${orgId}`)
       const url = `https://staging.bhutanndi.com/ndi-mobile-verifier/v1/organization/proof-templates?roleId=${encodeURIComponent(selectedOrgRole)}&orgId=${encodeURIComponent(orgId)}`;
       
-      console.log(`url ${url}`);
+      console.log(`i am triggered url ${url}`);
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -243,8 +243,8 @@ const ProofTemplate = () => {
   useEffect(() => {
     console.log("isAuthenticated:", isAuthenticated);
     if (isAuthenticated) {
-      fetchTemplates();
-      fetchRoles();
+      //fetchTemplates();
+      //fetchRoles();
       fetchOrganizationRoles();
     }
   }, [isAuthenticated]);
@@ -292,6 +292,7 @@ const ProofTemplate = () => {
 
   // Open nested schema modal
   const openSchemaModal = (index = null) => {
+    alert("Open schema")
     setSchemaName("");
     setSchemaUrl("");
     setSchemaFields([]);

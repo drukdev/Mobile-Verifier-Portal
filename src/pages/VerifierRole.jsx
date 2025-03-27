@@ -199,7 +199,7 @@ const VerifierRole = () => {
       cell: (info) => {
         const role = info.row.original;
         return (
-          <div className="flex justify-start gap-2">
+          <div className="flex justify-start gap-4">
             <button
               className="text-emerald-400 border border-emerald-400 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-green-50 transition-colors"
               onClick={() => handleEditRole(role)}

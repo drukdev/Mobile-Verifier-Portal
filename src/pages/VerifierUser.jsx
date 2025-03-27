@@ -419,12 +419,18 @@ const VerifierUser = () => {
         let statusText = "Unknown";
         switch (statusId) {
           case 1:
-            statusText = "ACTIVE";
+            statusText = "CREATED";
             break;
           case 2:
-            statusText = "SUSPENDED";
+            statusText = "INVITED";
             break;
           case 3:
+            statusText = "ACTIVE";
+            break;
+          case 4:
+            statusText = "SUSPENDED";
+            break;
+          case 5:
             statusText = "REVOKED";
             break;
           default:
@@ -440,16 +446,16 @@ const VerifierUser = () => {
         const statusId = row.original.statusId;
         return (
           <>
-            {statusId !== 3 && (
+            {statusId <= 2 && (
               <button
                 className="text-emerald-400 border border-emerald-400 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-emerald-50 transition-colors"
                 onClick={() => openConfirmationModal(row.original)}
               >
-                Send Invitation
+                Re-Invite
               </button>
             )}
-            {statusId === 3 && (
-              <span className="text-blue-500">Invitation Sent</span>
+            {statusId >= 3 && (
+              <span className="text-blue-500">NA</span>
             )}
           </>
         );
@@ -459,15 +465,15 @@ const VerifierUser = () => {
       header: "Actions",
       accessorKey: "actions",
       cell: ({ row }) => (
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-start gap-4 px-1">
           <button
-            className="text-emerald-400 border border-emerald-400 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-emerald-50 transition-colors"
+            className="text-emerald-400 border border-emerald-400 px-1 py-1 rounded text-xs md:text-sm font-medium hover:bg-emerald-50 transition-colors"
             onClick={() => openStatusModal(row.original)}
           >
             Update Status
           </button>
           <button
-            className="text-red-500 border border-red-500 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-red-50 transition-colors"
+            className="text-red-500 border border-red-500 px-1 py-1 rounded text-xs md:text-sm font-medium hover:bg-red-50 transition-colors"
             onClick={() => openDeleteModal(row.original)}
           >
             Delete

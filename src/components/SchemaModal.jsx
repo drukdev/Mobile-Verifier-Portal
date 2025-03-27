@@ -51,7 +51,7 @@ const SchemaModal = ({
           <table className="w-full border-collapse border border-gray-300">
             <thead>
               <tr className="bg-gray-200">
-                <th className="border p-2">Field</th>
+                <th className="border p-2">Attributes</th>
                 <th className="border p-2">Actions</th>
               </tr>
             </thead>
