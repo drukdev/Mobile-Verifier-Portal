@@ -151,7 +151,7 @@ const CreateOrganization = () => {
       {/* Updated Search and Add Organization Section */}
       <div className="flex flex-col md:flex-row gap-4 mb-4">
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-500 mb-1">Search Organizations</label>
+          <label className="block text-sm font-medium text-gray-500 mb-2">Search Organizations</label>
           <div className="relative w-full">
             <input
               type="text"

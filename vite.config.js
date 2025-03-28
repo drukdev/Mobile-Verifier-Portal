@@ -8,6 +8,9 @@ dotenv.config();
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: true,  // Listen on all addresses
+    port: 5173,  // Match your dev port
+    strictPort: true,
     proxy: {
       "/Auth": {
         target: "https://staging.bhutanndi.com",
