@@ -204,7 +204,7 @@ const ProofTemplate = () => {
     }
 
     try {
-      const url = "/api/mobile-verifier/v1/verifier-role";
+      const url = "/api/mobile-verifier/v1/verifier-role?pageSize=300";
       console.log("Fetching roles from:", url);
 
       const response = await fetch(url, {
@@ -244,7 +244,9 @@ const ProofTemplate = () => {
     console.log("isAuthenticated:", isAuthenticated);
     if (isAuthenticated) {
       //fetchTemplates();
-      //fetchRoles();
+     // fetchROles fetches for pip up
+     fetchRoles();
+     //fetches for pulling role manually
       fetchOrganizationRoles();
     }
   }, [isAuthenticated]);
@@ -292,7 +294,6 @@ const ProofTemplate = () => {
 
   // Open nested schema modal
   const openSchemaModal = (index = null) => {
-    alert("Open schema")
     setSchemaName("");
     setSchemaUrl("");
     setSchemaFields([]);
@@ -470,7 +471,7 @@ const ProofTemplate = () => {
             <option value="">Select a role</option>
             {organizationRoles.map((role) => (
               <option key={role.id} value={role.id}>
-                {role.role}
+                {`${role.id}: ${role.role}`}
               </option>
             ))}
           </select>

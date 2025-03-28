@@ -8,6 +8,8 @@ import ProofTemplate from './pages/ProofTemplate';
 import VerifierRole from './pages/VerifierRole';
 import CreateOrganization from './pages/CreateOrganization';
 import Settings from './pages/Settings';
+import PrivacyPolicy from './pages/utils/PrivacyPolicy';
+import TermsOfReference from './pages/utils/TermsOfReference';
 
 const App = () => {
   const { isAuthenticated } = useAuth();
@@ -30,6 +32,8 @@ const App = () => {
           <Route path="proof-templates" element={<ProofTemplate />} />
           <Route path="create-organization" element={<CreateOrganization />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="terms-of-service" element={<TermsOfReference />} />
         </Route>
 
         {/* Catch-all Route */}

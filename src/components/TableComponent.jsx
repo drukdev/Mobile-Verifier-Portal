@@ -31,7 +31,7 @@ const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
   return (
     <div className="">
       {/* Wrapper div for proper rounded corners */}
-      <div className="overflow-hidden rounded-lg border border-gray-300">
+      <div className="overflow-hidden rounded-lg border border-gray-50">
         <table className="w-full text-sm border-collapse">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (

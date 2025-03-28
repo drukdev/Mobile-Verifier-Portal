@@ -6,7 +6,8 @@ const AuthContext = createContext();
 // AuthProvider component to wrap the app
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const role = import.meta.env.VITE_ROLE;
+  //const role = import.meta.env.VITE_ROLE;
+  const role = 'client';
 
   // Check if the user is authenticated on initial load
   useEffect(() => {

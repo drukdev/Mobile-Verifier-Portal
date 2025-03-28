@@ -28,7 +28,7 @@ const Dashboard = () => {
         <TopNavbar title={getTitleFromPath(location.pathname)} />
 
         {/* Dashboard Content */}
-        <div className="flex-1 p-1 bg-gray-100">
+        <div className="flex-1 p-2 bg-white-500">
           <Outlet /> {/* This will render the nested routes */}
         </div>
       </div>

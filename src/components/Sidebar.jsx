@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   FaUser,
   FaCog,
+  FaQuestion,
   FaSignOutAlt,
   FaChevronLeft,
   FaChevronRight,
@@ -13,6 +14,7 @@ import { RiOrganizationChart } from 'react-icons/ri';
 import { useAuth } from '../context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import logo from '../assets/images/logo1.png';
+import logocollapse from '../assets/images/logo-collapse.png'
 
 const Sidebar = ({ onToggle }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -32,7 +34,7 @@ const Sidebar = ({ onToggle }) => {
   return (
     <div className="relative">
       <div
-        className={`${isCollapsed ? 'w-16' : 'w-64'} h-screen bg-gradient-to-b from-gray-50 to-gray-100 border-r border-gray-200 shadow-lg flex flex-col transition-all duration-300 ease-in-out overflow-hidden font-sans`}
+        className={`${isCollapsed ? 'w-16' : 'w-64'} h-full  bg-gradient-to-b from-white-50 to-white-100 border-r border-gray-200  flex flex-col transition-all duration-300 ease-in-out overflow-hidden font-sans`}
       >
         {/* Collapse Button */}
         <button
@@ -40,7 +42,7 @@ const Sidebar = ({ onToggle }) => {
           onClick={toggleSidebar}
         >
           {isCollapsed ? (
-            <FaChevronRight size={20} className="text-emerald-500 group-hover:text-emerald-600" />
+            <FaChevronRight size={15} className="text-emerald-500 group-hover:text-emerald-600" />
           ) : (
             <FaChevronLeft size={20} className="text-emerald-500 group-hover:text-emerald-600" />
           )}
@@ -48,16 +50,19 @@ const Sidebar = ({ onToggle }) => {
 
         {/* Sidebar Header */}
         <div
-          className={`flex items-center justify-center ${
-            isCollapsed ? 'py-3' : 'py-4'
-          } border-b border-gray-200 border-opacity-50 cursor-pointer hover:bg-gray-50 transition-colors duration-200`}
+          className={`flex items-center justify-center py-4  border-b border-gray-300 border-opacity-50 cursor-pointer hover:bg-gray-50 transition-colors duration-200`}
           onClick={handleLogoClick}
         >
-          <img
+          
+          {isCollapsed ? ( <img
+            src={logocollapse}
+            alt="Logo"
+            className={`transition-all duration-300 ${isCollapsed ? 'h-14 w-12 p-0' : 'h-14 -ml-14 w-auto'} brightness-110 contrast-110`}
+          />) : (<img
             src={logo}
             alt="Logo"
             className={`transition-all duration-300 ${isCollapsed ? 'h-10 w-10' : 'h-14 -ml-14 w-auto'} brightness-110 contrast-110`}
-          />
+          />)}
         </div>
 
         {/* Sidebar Items */}
@@ -68,13 +73,6 @@ const Sidebar = ({ onToggle }) => {
             {/* Client Items */}
             {role === 'client' && (
               <>
-                <NavItem
-                  icon={<RiOrganizationChart className="text-emerald-500 group-hover:text-emerald-600" />}
-                  label="Create Organization"
-                  path="/dashboard/create-organization"
-                  active={location.pathname === '/dashboard/create-organization'}
-                  isCollapsed={isCollapsed}
-                />
                 <NavItem
                   icon={<FaUsers className="text-emerald-500 group-hover:text-emerald-600" />}
                   label="Verifier Role"
@@ -97,12 +95,21 @@ const Sidebar = ({ onToggle }) => {
                   isCollapsed={isCollapsed}
                 />
               </>
+            )} 
+            { role === 'admin' && (
+              <NavItem
+                  icon={<RiOrganizationChart className="text-emerald-500 group-hover:text-emerald-600" />}
+                  label="Create Organization"
+                  path="/dashboard/create-organization"
+                  active={location.pathname === '/dashboard/create-organization'}
+                  isCollapsed={isCollapsed}
+                />
             )}
 
             {/* Common Items */}
             <NavItem
-              icon={<FaCog className="text-emerald-500 group-hover:text-emerald-600" />}
-              label="Settings"
+              icon={<FaQuestion className="text-emerald-500 group-hover:text-emerald-600" />}
+              label="FAQ"
               path="/dashboard/settings"
               active={location.pathname === '/dashboard/settings'}
               isCollapsed={isCollapsed}
@@ -111,16 +118,16 @@ const Sidebar = ({ onToggle }) => {
         </nav>
 
         {/* Branded Logout Button */}
-        <div className="px-6 py-2 mb-3 border-t border-gray-200">
+        <div className="px-4 mb-1 py-1 border-t border-gray-100">
           <button
             onClick={logout}
-            className="flex items-center w-full text-gray-600 hover:text-emerald-600 font-medium group transition-colors duration-200"
+            className="flex items-center w-full text-emerald-100 hover:text-emerald-600 font-medium group transition-colors duration-200"
           >
-            <div className="p-1.5 rounded-md group-hover:bg-emerald-50 transition-colors duration-200">
-              <FaSignOutAlt className="w-5 h-5 text-emerald-500 group-hover:text-emerald-600" />
+            <div className="py-1 rounded-md bg-emerald-50 group-hover:bg-emerald-50 transition-colors duration-200">
+              <FaSignOutAlt className="w-5 h-5 text-emerald-400 group-hover:text-emerald-600" />
             </div>
             {!isCollapsed && (
-              <span className="ml-3 group-hover:text-emerald-600 transition-colors duration-200">
+              <span className="ml-4 text-emerald-400 group-hover:text-emerald-700 transition-colors duration-200">
                 Logout
               </span>
             )}

@@ -67,9 +67,9 @@ const VerifierUser = () => {
       });
 
       const result = await response.json();
-      if (result.statusCode !== 200) {
-        const errorText = await result.message;
-        throw new Error(`Failed! ${errorText}`);
+       if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch users: ${errorText}`);
       }
 
       if (result.data && Array.isArray(result.data) && result.data.length > 1) {
@@ -80,7 +80,7 @@ const VerifierUser = () => {
       }
     } catch (error) {
       playSound("/sounds/failure.mp3");
-      toast.error(error.message);
+      toast.error(`${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -381,13 +381,11 @@ const VerifierUser = () => {
           },
         }
       );
-      const result = await response.json();
-
-      if (result.statusCode !== 200) {
-        const errorText = await result.message;
-        throw new Error(`StatusCode: ${result.statusCode}. Failed! ${errorText}`);
+    
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch roles: ${errorText}`);
       }
-
       playSound("/sounds/success.mp3");
       toast.success(`User status updated to ${selectedStatus}`);
       closeStatusModal();

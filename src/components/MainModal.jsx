@@ -116,7 +116,7 @@ const MainModal = ({
                           readOnly
                           className="mr-2"
                         />
-                        <span>{role.role}</span>
+                        <span>{`${role.id}: ${role.role}`}</span>
                       </div>
                     ))}
                   </div>
