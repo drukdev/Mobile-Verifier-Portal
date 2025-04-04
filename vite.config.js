@@ -11,6 +11,7 @@ export default defineConfig({
     host: true,  // Listen on all addresses
     port: 5173,  // Match your dev port
     strictPort: true,
+    allowedHosts: ['e093-202-144-128-70.ngrok-free.app'],
     proxy: {
       "/Auth": {
         target: "https://staging.bhutanndi.com",
