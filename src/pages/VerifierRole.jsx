@@ -316,7 +316,7 @@ const VerifierRole = () => {
                   type="submit"
                   className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors"
                 >
-                  {editingRole ? "Update" : "Save"}
+                  {editingRole ? "Update" : "Create Role"}
                 </button>
               </div>
             </form>

@@ -460,41 +460,7 @@ const ProofTemplate = () => {
 
       {/* Organization Templates Section */}
       
-      <div className="flex flex-col md:flex-row gap-4 mb-3 py-1">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-500 mb-1">Select Role</label>
-          <select
-            value={selectedOrgRole}
-            onChange={(e) => setSelectedOrgRole(e.target.value)}
-            className="w-full px-3 py-2 text-gray-500 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
-          >
-            <option value="">Select a role</option>
-            {organizationRoles.map((role) => (
-              <option key={role.id} value={role.id}>
-                {`${role.id}: ${role.role}`}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-500 mb-1">Organization ID</label>
-          <input
-            type="text"
-            value={orgId}
-            onChange={(e) => setOrgId(e.target.value)}
-            className="w-full px-3 py-2 text-gray-500 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
-            placeholder="Enter Organization ID"
-          />
-        </div>
-        <div className="flex items-end">
-          <button
-            onClick={fetchOrganizationTemplates}
-            className="bg-emerald-400 text-white px-6 py-1 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors h-[42px]"
-          >
-            Get Proof Template
-          </button>
-        </div>
-      </div>
+     
 
       {/* Search and Add Template Section */}
       <div className="flex flex-col md:flex-row gap-4 mb-3">

@@ -58,11 +58,11 @@ const SchemaModal = ({
             <tbody>
               {schemaFields.map((field, index) => (
                 <tr key={index} className="border-b">
-                  <td className="border p-2">
+                  <td className=" p-2">
                     <input
                       type="text"
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-emerald-400 transition duration-200"
-                      placeholder="Field"
+                      placeholder="Attributes as per pre-defined VC Schema"
                       value={field.field}
                       onChange={(e) => {
                         const updatedFields = [...schemaFields];
@@ -73,7 +73,7 @@ const SchemaModal = ({
                   </td>
                   <td className="border p-2 text-center">
                     <button
-                      className="text-red-500 hover:text-red-700 transition-colors"
+                      className="text-red-500 border border-red-500 px-1 py-1 rounded text-xs md:text-sm font-medium hover:bg-red-50 transition-colors"
                       onClick={() => {
                         const updatedFields = schemaFields.filter((_, i) => i !== index);
                         setSchemaFields(updatedFields);
@@ -87,7 +87,7 @@ const SchemaModal = ({
             </tbody>
           </table>
           <button
-            className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium mt-4 hover:bg-emerald-600 transition-colors"
+            className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-xs font-bold mt-4 hover:bg-emerald-600 transition-colors"
             onClick={addSchemaField}
           >
             Insert Attributes

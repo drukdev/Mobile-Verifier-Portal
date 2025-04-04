@@ -1,13 +1,13 @@
 version: '3.8'
 
 services:
-  web:
-    build: 
-      context: .
-      dockerfile: Dockerfile.prod  # Renamed for clarity
-    ports:
-      - "3000:80"
-    restart: unless-stopped
+  #web:
+   # build: 
+    #  context: .
+     # dockerfile: Dockerfile.prod  # Renamed for clarity
+    #ports:
+     # - "3000:80"
+    #restart: unless-stopped'''
 
   dev:
     build:
