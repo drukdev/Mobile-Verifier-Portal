@@ -32,9 +32,9 @@ const TopNavbar = ({ title, isSidebarCollapsed }) => {
       </div>
       {/* Fixed Bottom Navigation */}
       <div 
-        className="fixed bottom-0 bg-white-400 border-t border-gray-200 py-3 w-screen transition-all duration-300">
-        <div className="flex flex-col bg-white-400 pl-0 sm:flex-row justify-around ml-1 items-start gap-10">
-          <div className="flex items-start gap-9 sm:gap-6">
+        className="fixed  bottom-0 bg-white-400 border-t border-gray-200 py-3 w-screen transition-all duration-300">
+        <div className="flex flex-col  justify-evenly bg-white-400 pl-0 sm:flex-row ml-1  gap-1">
+          <div className="flex justify-start gap-1 sm:gap-6">
             <button 
               onClick={() => navigate('/dashboard/privacy-policy')}
               className="text-xs text-gray-500 hover:text-emerald-600 cursor-pointer transition-colors whitespace-nowrap"
@@ -48,7 +48,7 @@ const TopNavbar = ({ title, isSidebarCollapsed }) => {
               Terms
             </button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-end gap-3">
             <span className="text-xs text-gray-500 whitespace-wrap">
               © {new Date().getFullYear()} Bhutan NDI
             </span>

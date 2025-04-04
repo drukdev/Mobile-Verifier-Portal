@@ -12,21 +12,35 @@ import PrivacyPolicy from './pages/utils/PrivacyPolicy';
 import TermsOfReference from './pages/utils/TermsOfReference';
 
 const App = () => {
-  const { isAuthenticated } = useAuth();
-  console.log("App.js - isAuthenticated:", isAuthenticated); // Debugging
+  const { isAuthenticated, role } = useAuth();
+  console.log("App.js - isAuthenticated:", isAuthenticated, "Role:", role); // Debugging
+
+  // Determine the default dashboard route based on role
+  const getDefaultDashboardRoute = () => {
+    if (!isAuthenticated) return "/login";
+    
+    switch(role) {
+      case "client":
+        return "/dashboard/verifier-role";
+      case "admin":
+        return "/dashboard/create-organization";
+      default:
+        return "/dashboard"; // Fallback for unknown roles
+    }
+  };
 
   return (
     <Router>
       <Routes>
-        {/* Redirect to /dashboard if authenticated, otherwise to /login */}
-        <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} />
+        {/* Redirect to appropriate dashboard route if authenticated, otherwise to /login */}
+        <Route path="/" element={<Navigate to={getDefaultDashboardRoute()} />} />
 
         {/* Login Route */}
-        <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
+        <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to={getDefaultDashboardRoute()} />} />
 
         {/* Dashboard Route with Nested Routes */}
         <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />}>
-          <Route index element={<div>Dashboard Home</div>} /> {/* Default route for /dashboard */}
+          <Route index element={<Navigate to={role === "client" ? "verifier-role" : "create-organization"} />} />
           <Route path="verifier-role" element={<VerifierRole />} />
           <Route path="verifier-user" element={<VerifierUser />} />
           <Route path="proof-templates" element={<ProofTemplate />} />
@@ -37,7 +51,7 @@ const App = () => {
         </Route>
 
         {/* Catch-all Route */}
-        <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} />
+        <Route path="*" element={<Navigate to={getDefaultDashboardRoute()} />} />
       </Routes>
     </Router>
   );

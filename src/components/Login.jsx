@@ -22,7 +22,10 @@ const Login = () => {
     const { clientId, clientSecret } = data;
     const auth_api_url = import.meta.env.VITE_AUTH_API_URL;
     const role = import.meta.env.VITE_ROLE;
-    console.log(`vite role ${role}`)
+    //const auth_api_url = 'https://staging.bhutanndi.com/authentication/v1/authenticate'
+    //const role = 'admin'
+    console.log(`role is ${role}`)
+
 
     setLoading(true);
     setError('');

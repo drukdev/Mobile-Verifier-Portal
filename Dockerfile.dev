@@ -1,0 +1,19 @@
+FROM node:20-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    npm \
+    git
+
+WORKDIR /app
+
+# Copy package files first
+COPY package.json package-lock.json ./
+
+# Install dependencies
+RUN npm install --silent
+
+# Copy the rest of the application
+COPY . .
+
+CMD ["npm", "run", "dev"]

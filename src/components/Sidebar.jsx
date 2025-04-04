@@ -123,7 +123,7 @@ const Sidebar = ({ onToggle }) => {
             onClick={logout}
             className="flex items-center w-full text-emerald-100 hover:text-emerald-600 font-medium group transition-colors duration-200"
           >
-            <div className="py-1 rounded-md bg-emerald-50 group-hover:bg-emerald-50 transition-colors duration-200">
+            <div className="py-1 ml-2 rounded-md bg-emerald-50 group-hover:bg-emerald-50 transition-colors duration-200">
               <FaSignOutAlt className="w-5 h-5 text-emerald-400 group-hover:text-emerald-600" />
             </div>
             {!isCollapsed && (

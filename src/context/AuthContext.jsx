@@ -1,49 +1,54 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
-// Create the AuthContext
-const AuthContext = createContext();
+// 1. Create context separately (stable reference)
+const AuthContext = createContext(null);
 
-// AuthProvider component to wrap the app
-export const AuthProvider = ({ children }) => {
+// 2. Named export for provider (required for Fast Refresh)
+export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  //const role = import.meta.env.VITE_ROLE;
-  const role = 'client';
-  console.log(role);
-  // Check if the user is authenticated on initial load
+  const role = import.meta.env.VITE_ROLE;
+  ///const role = 'admin'
   useEffect(() => {
-    const token = localStorage.getItem('authToken'); // Ensure this matches the key used in Login.jsx
-    const expiryTime = localStorage.getItem('authTokenExpiry'); // Ensure this matches the key used in Login.jsx
+    const token = localStorage.getItem('authToken');
+    const expiryTime = localStorage.getItem('authTokenExpiry');
 
     if (token && expiryTime && new Date().getTime() < expiryTime) {
       setIsAuthenticated(true);
     } else {
-      // Clear invalid or expired tokens
       localStorage.removeItem('authToken');
       localStorage.removeItem('authTokenExpiry');
       setIsAuthenticated(false);
     }
   }, []);
 
-  // Login function
   const login = (token, expiryTime) => {
     localStorage.setItem('authToken', token);
     localStorage.setItem('authTokenExpiry', expiryTime);
     setIsAuthenticated(true);
   };
 
-  // Logout function
   const logout = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('authTokenExpiry');
     setIsAuthenticated(false);
   };
 
-  return (
-    <AuthContext.Provider value={{ isAuthenticated, role, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  // 3. Memoize context value (critical for performance)
+  const value = useMemo(() => ({
+    isAuthenticated,
+    role,
+    login,
+    logout
+  }), [isAuthenticated, role]);
 
-// Custom hook to use AuthContext
-export const useAuth = () => useContext(AuthContext);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+// 4. Named export for hook (required for Fast Refresh)
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}

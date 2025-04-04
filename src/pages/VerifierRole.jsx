@@ -45,6 +45,8 @@ const VerifierRole = () => {
 
     try {
       const url = "/api/mobile-verifier/v1/verifier-role?pageSize=300";
+      //sconst API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
       const response = await fetch(url, {
         method: "GET",
