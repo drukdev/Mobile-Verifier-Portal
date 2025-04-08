@@ -1,13 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
-// 1. Create context separately (stable reference)
 const AuthContext = createContext(null);
 
-// 2. Named export for provider (required for Fast Refresh)
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const role = import.meta.env.VITE_ROLE;
-  ///const role = 'admin'
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     const expiryTime = localStorage.getItem('authTokenExpiry');
@@ -33,7 +30,6 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(false);
   };
 
-  // 3. Memoize context value (critical for performance)
   const value = useMemo(() => ({
     isAuthenticated,
     role,
@@ -44,7 +40,6 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// 4. Named export for hook (required for Fast Refresh)
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

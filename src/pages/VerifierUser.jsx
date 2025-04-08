@@ -48,6 +48,7 @@ const VerifierUser = () => {
     const audio = new Audio(soundFile);
     audio.play();
   };
+  const auth_api_url = import.meta.env.VITE_API_BASE_URL;
 
   const fetchUsers = async () => {
     const token = localStorage.getItem("authToken");
@@ -58,7 +59,7 @@ const VerifierUser = () => {
     }
 
     try {
-      const response = await fetch("https://demo-client.bhutanndi.com/mobile-verifier/v1/verifier-user?pageSize=300", {
+      const response = await fetch(`${auth_api_url}/mobile-verifier/v1/verifier-user?pageSize=300`, {
         method: "GET",
         headers: {
           accept: "*/*",
@@ -67,6 +68,7 @@ const VerifierUser = () => {
       });
 
       const result = await response.json();
+      console.log(`response is ${response}`)
        if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to fetch users: ${errorText}`);
@@ -95,7 +97,7 @@ const VerifierUser = () => {
     }
     //Logic to pass pageSize as query parameter pending
     try {
-      const response = await fetch("https://demo-client.bhutanndi.com/mobile-verifier/v1/verifier-role?pageSize=300", {
+      const response = await fetch(`${auth_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`, {
         method: "GET",
         headers: {
           accept: "*/*",
@@ -217,7 +219,7 @@ const VerifierUser = () => {
 
     try {
       if (isEditing) {
-        const updateResponse = await fetch(`https://demo-client.bhutanndi.com/mobile-verifier/v1/verifier-user/${editingUserId}`, {
+        const updateResponse = await fetch(`${auth_api_url}/mobile-verifier/v1/verifier-user/${editingUserId}`, {
           method: "PATCH",
           headers: {
             accept: "*/*",
@@ -235,7 +237,7 @@ const VerifierUser = () => {
         playSound("/sounds/success.mp3");
         toast.success("User updated successfully!");
       } else {
-        const createResponse = await fetch("https://demo-client.bhutanndi.com/mobile-verifier/v1/verifier-user", {
+        const createResponse = await fetch(`${auth_api_url}/mobile-verifier/v1/verifier-user`, {
           method: "POST",
           headers: {
             accept: "*/*",
@@ -278,7 +280,7 @@ const VerifierUser = () => {
     }
 
     try {
-      const response = await fetch(`https://demo-client.bhutanndi.com/mobile-verifier/v1/verifier-user/${userToDelete.id}`, {
+      const response = await fetch(`${auth_api_url}/mobile-verifier/v1/verifier-user/${userToDelete.id}`, {
         method: "DELETE",
         headers: {
           accept: "*/*",
@@ -317,7 +319,7 @@ const VerifierUser = () => {
     }
 
     try {
-      const response = await fetch("https://demo-client.bhutanndi.com/mobile-verifier/v1/verifier-user/invite", {
+      const response = await fetch(`${auth_api_url}/mobile-verifier/v1/verifier-user/invite`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -370,7 +372,7 @@ const VerifierUser = () => {
 
     try {
       const response = await fetch(
-        `https://demo-client.bhutanndi.com/mobile-verifier/v1/verifier-user/revoke_suspend?id=
+        `${auth_api_url}/mobile-verifier/v1/verifier-user/revoke_suspend?id=
         ${encodeURIComponent(selectedUserForStatus.id)}&status=${encodeURIComponent(selectedStatus)}`,
         {
           method: "POST",
@@ -397,6 +399,10 @@ const VerifierUser = () => {
   };
 
   const columns = [
+    {
+      header: "User ID",
+      accessorKey: "id",
+    },
     {
       header: "User Name",
       accessorKey: "username",
@@ -439,7 +445,7 @@ const VerifierUser = () => {
     },
     {
       header: "Invitation",
-      accessorKey: "id",
+      id: "invite",
       cell: ({ row }) => {
         const statusId = row.original.statusId;
         return (
@@ -453,7 +459,7 @@ const VerifierUser = () => {
               </button>
             )}
             {statusId >= 3 && (
-              <span className="text-blue-500">NA</span>
+              <span className="text-blue-500 tex-bold">-</span>
             )}
           </>
         );
@@ -462,22 +468,25 @@ const VerifierUser = () => {
     {
       header: "Actions",
       accessorKey: "actions",
-      cell: ({ row }) => (
+      cell: ({ row }) => { 
+        const statusId = row.original.statusId;
+        return (
         <div className="flex justify-start gap-4 px-1">
+          {statusId !== 5 && (
           <button
             className="text-emerald-400 border border-emerald-400 px-1 py-1 rounded text-xs md:text-sm font-medium hover:bg-emerald-50 transition-colors"
             onClick={() => openStatusModal(row.original)}
           >
             Update Status
-          </button>
-          <button
+          </button> )}
+          {/*<button
             className="text-red-500 border border-red-500 px-1 py-1 rounded text-xs md:text-sm font-medium hover:bg-red-50 transition-colors"
             onClick={() => openDeleteModal(row.original)}
           >
             Delete
-          </button>
+          </button> */}
         </div>
-      ),
+    )}
     },
   ];
 
@@ -528,15 +537,15 @@ const VerifierUser = () => {
       {/* Add/Edit User Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-xl font-semibold mb-4">{isEditing ? "Edit User" : "Add New User"}</h3>
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96 ">
+            <h3 className="text-xl font-semibold mb-4 text-gray-500 text-center">{isEditing ? "Edit User" : "Add New User"}</h3>
             {errorRoles && (
-              <div className="text-red-500 text-sm mb-4">Error loading roles: {errorRoles}</div>
+              <div className="text-red-400 text-sm mb-4">Error loading roles: {errorRoles}</div>
             )}
             <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="flex gap-4 mb-4">
+              <div className="flex gap-4 mb-4 text-gray-500">
                 <div className="flex-1">
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-500 mb-2">
                     First Name
                   </label>
                   <input
@@ -550,7 +559,7 @@ const VerifierUser = () => {
                   )}
                 </div>
                 <div className="flex-1">
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-500 mb-2">
                     Last Name
                   </label>
                   <input
@@ -566,7 +575,7 @@ const VerifierUser = () => {
               </div>
 
               <div className="mb-4">
-                <label htmlFor="foundationID" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="foundationID" className="block text-sm font-medium text-gray-500 mb-2">
                   Foundation ID
                 </label>
                 <input
@@ -581,7 +590,7 @@ const VerifierUser = () => {
               </div>
 
               <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-500 mb-2">
                   Email
                 </label>
                 <input
@@ -600,7 +609,7 @@ const VerifierUser = () => {
               </div>
 
               <div className="mb-4">
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="role" className="block text-sm font-medium text-gray-500 mb-2">
                   Role
                 </label>
                 <Controller
@@ -614,9 +623,9 @@ const VerifierUser = () => {
                       {...field}
                       disabled={loadingRoles}
                     >
-                      <option value="">Select Role</option>
+                      <option value="" className="text-gray-500">Select Role</option>
                       {roles.map((role) => (
-                        <option key={role.id} value={role.role}>
+                        <option className="text-gray-500" key={role.id} value={role.role}>
                           {role.role}
                         </option>
                       ))}

@@ -6,13 +6,10 @@ const BottomNavbar = ({ isSidebarCollapsed }) => {
 
   return (
     <div 
-      className={`fixed bottom-0 bg-white border-t border-gray-200 py-2 px-6 transition-all duration-300 ${
-        isSidebarCollapsed ? 'lg:left-16' : 'lg:left-64'
+      className={`fixed bottom-0 bg-white border-t border-gray-200 py-6 px-6 transition-all duration-300 ${
+        isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
       } w-full`}
-      style={{ 
-        height: '56px', // Fixed height for consistency
-        marginTop: 'calc(100vh - 56px)' // Push to bottom
-      }}
+      style={{ height: '56px' }}
     >
       <div className="flex flex-col sm:flex-row justify-between items-center gap-2 max-w-[1800px] mx-auto h-full">
         <div className="flex flex-wrap justify-center gap-3 sm:gap-6">

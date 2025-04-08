@@ -14,7 +14,7 @@ const FaqsCard = (props) => {
 
   return (
     <div
-      className="space-y-2 mt-3 overflow-hidden border-b border-emerald-400"
+      className="space-y-2 mt-1 overflow-hidden border-b border-emerald-400"
       key={idx}
       onClick={handleOpenAnswer}
     >
@@ -69,23 +69,23 @@ export default () => {
   const faqsList = [
     {
       q: "What is mobile Verifier?",
-      a: "That's exactly the reason we created this random question generator. There are hundreds of random questions to choose from so you're able to find the perfect random question.",
+      a: "XYZ",
     },
     {
       q: "How to use mobile verifier?",
-      a: "This generator doesn't include most common questions. The thought is that you can come up with common questions on your own so most of the questions in this generator.",
+      a: "XYZ.",
     },
     {
       q: "What is proof template?",
-      a: "Yes! there are two ways that you can use this question generator depending on what you're after. You can indicate that you want 21 questions generated.",
+      a: "XYZ",
     },
     {
       q: "How to I add proof template fields?",
-      a: "The questions in this generator are gender neutral and can be used to ask either male of females (or any other gender the person identifies with).",
+      a: "XYZ.",
     },
     {
       q: "What do you wish you had more talent doing?",
-      a: "If you've been searching for a way to get random questions, you've landed on the correct webpage. We created the Random Question Generator to ask you as many random questions as your heart desires.",
+      a: "XYZ",
     },
   ];
 

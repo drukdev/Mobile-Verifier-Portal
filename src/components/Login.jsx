@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useForm } from 'react-hook-form';
 import logo from '../assets/images/logo.png';
@@ -17,21 +17,43 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const audioRef = useRef(null);
+
+  const playSound = (type) => {
+    try {
+      const soundFile = type === 'success' ? '/sounds/success.mp3' : '/sounds/failure.mp3';
+      const audio = new Audio(soundFile);
+      audio.play().catch(e => console.log(`${type} sound play failed:`, e));
+    } catch (e) {
+      console.log(`${type} sound initialization failed:`, e);
+    }
+  };
+
+  const showSuccessToast = () => {
+    return new Promise((resolve) => {
+      toast.success('Login successful! Redirecting...', {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+        onClose: resolve
+      });
+    });
+  };
 
   const handleExternalAuthSubmit = async (data) => {
     const { clientId, clientSecret } = data;
     const auth_api_url = import.meta.env.VITE_AUTH_API_URL;
     const role = import.meta.env.VITE_ROLE;
-    //const auth_api_url = 'https://staging.bhutanndi.com/authentication/v1/authenticate'
-    //const role = 'admin'
-    console.log(`role is ${role}`)
-
 
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch(auth_api_url, {
+      const response = await fetch(`${auth_api_url}/authentication/v1/authenticate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -43,36 +65,58 @@ const Login = () => {
         }),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Authentication failed');
+        let errorMessage = 'Authentication failed';
+        
+        if (response.status === 400) {
+          errorMessage = responseData.error_description || 'Invalid Client ID or Secret';
+        } else if (response.status === 401) {
+          errorMessage = 'Unauthorized: Invalid credentials';
+        } else if (response.status === 403) {
+          errorMessage = 'Forbidden: Access denied';
+        } else {
+          errorMessage = responseData.message || 'Authentication failed. Please try again.';
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      const { access_token, expires_in } = await response.json();
+      const { access_token, expires_in } = responseData;
+      console.log(`access token: ${access_token}`);
       const expiryTime = new Date().getTime() + expires_in * 1000;
-      console.log("token tashi: " + access_token)
       localStorage.setItem('authToken', access_token);
       localStorage.setItem('authTokenExpiry', expiryTime);
       login(access_token, expiryTime);
-      if (role == "client") {
-       navigate('/dashboard/verifier-role');
-       console.log(`role: ${role}`);
-      }
-       else if (role == "admin") {
+      
+      // Play success sound
+      playSound('success');
+      
+      // Show success toast and wait for it to complete
+      await showSuccessToast();
+
+      // Navigate after toast is shown
+      if (role === "client") {
+        navigate('/dashboard/verifier-role');
+      } else if (role === "admin") {
         navigate('/dashboard/create-organization');
-       }
-        else {
-          navigate('/dashboard/')
-        }
+      } else {
+        navigate('/dashboard/');
+      }
+
     } catch (error) {
-      setError(error.message || 'Authentication failed. Please check your credentials.');
-      toast.error(error.message || 'Authentication failed. Please check your credentials.', {
-        position: 'top-right',
+      setError(error.message);
+      // Play error sound and show error toast
+      playSound('error');
+      toast.error(error.message, {
+        position: "top-right",
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
+        theme: "colored"
       });
     } finally {
       setLoading(false);
@@ -81,6 +125,20 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex bg-white">
+      {/* ToastContainer must be present */}
+      <ToastContainer 
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+      
       {/* Left Side: Login Form */}
       <div className="w-full md:w-1/2 flex flex-col p-6 md:p-8 pl-6 md:pl-10 bg-white">
         <div className="flex justify-start pl-1 md:pl-4">
@@ -96,15 +154,18 @@ const Login = () => {
             <form onSubmit={handleSubmit(handleExternalAuthSubmit)} className="mt-6 space-y-4">
               <input type="hidden" name="remember" value="true" />
               <div className="rounded-md shadow-sm -space-y-px">
-                {/* Client ID Input */}
                 <div className="mb-4">
-                  <label htmlFor="clientId" className="sr-only">
-                    Client ID
-                  </label>
+                  <label htmlFor="clientId" className="sr-only">Client ID</label>
                   <input
                     id="clientId"
                     type="text"
-                    {...register('clientId', { required: 'Client ID is required' })}
+                    {...register('clientId', { 
+                      required: 'Client ID is required',
+                      minLength: {
+                        value: 3,
+                        message: 'Client ID must be at least 3 characters'
+                      }
+                    })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 hover:border-emerald-400 transition-colors"
                     placeholder="Enter Client ID"
                   />
@@ -112,15 +173,18 @@ const Login = () => {
                     <p className="text-red-500 text-sm mt-1">{errors.clientId.message}</p>
                   )}
                 </div>
-                {/* Client Secret Input */}
                 <div className="mb-6">
-                  <label htmlFor="clientSecret" className="sr-only">
-                    Client Secret
-                  </label>
+                  <label htmlFor="clientSecret" className="sr-only">Client Secret</label>
                   <input
                     id="clientSecret"
                     type="password"
-                    {...register('clientSecret', { required: 'Client Secret is required' })}
+                    {...register('clientSecret', { 
+                      required: 'Client Secret is required',
+                      minLength: {
+                        value: 6,
+                        message: 'Client Secret must be at least 6 characters'
+                      }
+                    })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 hover:border-emerald-400 transition-colors"
                     placeholder="Enter Client Secret"
                   />
@@ -129,7 +193,6 @@ const Login = () => {
                   )}
                 </div>
               </div>
-              {/* Submit Button */}
               <div className="mt-6">
                 <button
                   type="submit"

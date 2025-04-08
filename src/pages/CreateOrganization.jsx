@@ -20,6 +20,7 @@ const CreateOrganization = () => {
     const audio = new Audio(soundFile);
     audio.play();
   };
+  const auth_api_url = import.meta.env.VITE_AUTH_API_URL;
 
   const handleUnauthorized = () => {
     toast.error("Session expired. Please login again.");
@@ -33,7 +34,7 @@ const CreateOrganization = () => {
     setError("");
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("https://staging.bhutanndi.com/ndi-mobile-verifier/v1/organization", {
+      const response = await fetch(`${auth_api_url}/ndi-mobile-verifier/v1/organization`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -81,8 +82,7 @@ const CreateOrganization = () => {
 
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(
-        `https://staging.bhutanndi.com/ndi-mobile-verifier/v1/organization/${selectedOrganization.orgId}`,
+      const response = await fetch(`${auth_api_url}/ndi-mobile-verifier/v1/organization/${selectedOrganization.orgId}`,
         {
           method: "DELETE",
           headers: {

@@ -11,6 +11,7 @@ import Settings from './pages/Settings';
 import PrivacyPolicy from './pages/utils/PrivacyPolicy';
 import TermsOfReference from './pages/utils/TermsOfReference';
 
+
 const App = () => {
   const { isAuthenticated, role } = useAuth();
   console.log("App.js - isAuthenticated:", isAuthenticated, "Role:", role); // Debugging

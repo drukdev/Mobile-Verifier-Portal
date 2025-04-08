@@ -26,6 +26,12 @@ const VerifierRole = () => {
     setValue,
     formState: { errors },
   } = useForm();
+  const auth_api_url = import.meta.env.VITE_API_BASE_URL;
+
+  const handleUnauthorized = () => {
+      toast.error("Session expired. Please login again.");
+      logout();
+    };
 
   // Function to play sound
   const playSound = (soundFile) => {
@@ -41,10 +47,11 @@ const VerifierRole = () => {
     if (!token) {
       toast.error("You are not authenticated");
       return;
-    }
+    }    
 
     try {
-      const url = "/api/mobile-verifier/v1/verifier-role?pageSize=300";
+      const url = `${auth_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`;
+      console.log(`this sit the url ${url}`);
       //sconst API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
@@ -57,6 +64,11 @@ const VerifierRole = () => {
       });
 
 
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to fetch roles: ${errorText}`);
@@ -94,8 +106,8 @@ const VerifierRole = () => {
     }
 
     const url = editingRole
-      ? `/api/mobile-verifier/v1/verifier-role/${editingRole.id}`
-      : "/api/mobile-verifier/v1/verifier-role/verifier-roles";
+      ? `${auth_api_url}/mobile-verifier/v1/verifier-role/${editingRole.id}`
+      : `${auth_api_url}/mobile-verifier/v1/verifier-role/verifier-roles`;
     const method = editingRole ? "PATCH" : "POST";
     try {
       const response = await fetch(url, {
@@ -159,7 +171,7 @@ const VerifierRole = () => {
 
     try {
       const response = await fetch(
-        `/api/mobile-verifier/v1/verifier-role/${roleToDelete.id}`,
+        `${auth_api_url}/mobile-verifier/v1/verifier-role/${roleToDelete.id}`,
         {
           method: "DELETE",
           headers: {
@@ -195,7 +207,9 @@ const VerifierRole = () => {
   const columns = [
     { accessorKey: "id", header: "Role ID", cell: (info) => info.getValue(), enableSorting: true },
     { accessorKey: "role", header: "Role Name", cell: (info) => info.getValue(), enableSorting: true },
-    {
+    
+  ];
+{/*{
       id: "actions",
       header: "Actions",
       cell: (info) => {
@@ -208,18 +222,11 @@ const VerifierRole = () => {
             >
               Update
             </button>
-            <button
-              onClick={() => handleDeleteRole(role.id)}
-              className="text-red-500 border border-red-500 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-red-50 transition-colors"
-            >
-              Delete
-            </button>
+            
           </div>
         );
       },
-    },
-  ];
-
+    }, */}
   return (
     <div className="flex-1 mt-4 overflow-x-auto">
       <ToastContainer
@@ -283,12 +290,12 @@ const VerifierRole = () => {
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-xl font-semibold mb-4">
+            <h3 className="text-xl font-semibold mb-4 text-gray-500 text-center">
               {editingRole ? "Edit Role" : "Add New Role"}
             </h3>
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="mb-4">
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="role" className="block text-sm font-medium text-gray-500 mb-2">
                   Role Name
                 </label>
                 <input

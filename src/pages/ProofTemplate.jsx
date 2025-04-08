@@ -20,6 +20,9 @@ const ProofTemplate = () => {
   const [orgId, setOrgId] = useState("");
   const [organizationRoles, setOrganizationRoles] = useState([]);
   const [selectedOrgRole, setSelectedOrgRole] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [loadingRoles, setLoadingRoles] = useState(true);
+  const [loadingOrganizationRoles, setLoadingOrganizationRoles] = useState(true);
 
   // Schema state variables
   const [schemaName, setSchemaName] = useState("");
@@ -53,10 +56,12 @@ const ProofTemplate = () => {
     const audio = new Audio(soundFile);
     audio.play();
   };
+  const auth_api_url = import.meta.env.VITE_API_BASE_URL;
 
   // Fetch organization-specific templates
   const fetchOrganizationTemplates = async () => {
     const token = localStorage.getItem("authToken");
+    console.log(`this is token ${token}`);
     
     if (!token) {
       toast.error("You are not authenticated");
@@ -69,10 +74,8 @@ const ProofTemplate = () => {
     }
 
     try {
-      console.log(`role ${selectedOrgRole} and org ${orgId}`)
-      const url = `https://staging.bhutanndi.com/ndi-mobile-verifier/v1/organization/proof-templates?roleId=${encodeURIComponent(selectedOrgRole)}&orgId=${encodeURIComponent(orgId)}`;
+      const url = `${auth_api_url}/ndi-mobile-verifier/v1/organization/proof-templates?roleId=${encodeURIComponent(selectedOrgRole)}&orgId=${encodeURIComponent(orgId)}`;
       
-      console.log(`i am triggered url ${url}`);
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -87,7 +90,6 @@ const ProofTemplate = () => {
       }
 
       const result = await response.json();
-      console.log("Organization Templates Response:", result);
 
       if (result.data && Array.isArray(result.data)) {
         setTemplates(result.data);
@@ -106,15 +108,17 @@ const ProofTemplate = () => {
 
   // Fetch organization roles
   const fetchOrganizationRoles = async () => {
+    setLoadingOrganizationRoles(true);
     const token = localStorage.getItem("authToken");
     
     if (!token) {
       toast.error("You are not authenticated");
+      setLoadingOrganizationRoles(false);
       return;
     }
 
     try {
-      const url = "/api/mobile-verifier/v1/verifier-role";
+      const url = `${auth_api_url}/mobile-verifier/v1/verifier-role`;
       
       const response = await fetch(url, {
         method: "GET",
@@ -130,7 +134,6 @@ const ProofTemplate = () => {
       }
 
       const result = await response.json();
-      console.log("Organization Roles Response:", result);
 
       if (result.data && Array.isArray(result.data) && result.data.length > 1) {
         const roles = result.data[1];
@@ -143,24 +146,25 @@ const ProofTemplate = () => {
       console.error("Error fetching organization roles:", error);
       playSound("/sounds/failure.mp3");
       toast.error("Failed to fetch organization roles");
+    } finally {
+      setLoadingOrganizationRoles(false);
     }
   };
 
   // Fetch templates and roles from the backend
   const fetchTemplates = async () => {
+    setLoading(true);
     const token = localStorage.getItem("authToken");
-    console.log("Token:", token);
 
     if (!token) {
       console.error("No token found");
       toast.error("You are not authenticated");
+      setLoading(false);
       return;
     }
 
     try {
-      const url = "/api/mobile-verifier/v1/proof-templates";
-      console.log("Fetching templates from:", url);
-
+      const url = `${auth_api_url}/mobile-verifier/v1/proof-template?pageSize=300`;
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -168,8 +172,6 @@ const ProofTemplate = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      console.log("Response status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -178,10 +180,9 @@ const ProofTemplate = () => {
       }
 
       const result = await response.json();
-      console.log("API Response:", result);
 
       if (result.data && Array.isArray(result.data)) {
-        setTemplates(result.data);
+        setTemplates(result.data[1]);
       } else {
         console.error("Invalid data format:", result);
         toast.error("Invalid data format received from the server");
@@ -190,22 +191,24 @@ const ProofTemplate = () => {
       console.error("Error fetching templates:", error);
       playSound("/sounds/failure.mp3");
       toast.error("Failed to fetch templates");
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchRoles = async () => {
+    setLoadingRoles(true);
     const token = localStorage.getItem("authToken");
-    console.log("Token:", token);
 
     if (!token) {
       console.error("No token found");
       toast.error("You are not authenticated");
+      setLoadingRoles(false);
       return;
     }
 
     try {
-      const url = "/api/mobile-verifier/v1/verifier-role?pageSize=300";
-      console.log("Fetching roles from:", url);
+      const url = `${auth_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`;
 
       const response = await fetch(url, {
         method: "GET",
@@ -215,8 +218,6 @@ const ProofTemplate = () => {
         },
       });
 
-      console.log("Response status:", response.status);
-
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Error response:", errorText);
@@ -224,8 +225,6 @@ const ProofTemplate = () => {
       }
 
       const result = await response.json();
-      console.log("API Response:", result);
-
       if (result.data && Array.isArray(result.data) && result.data.length > 1) {
         const roles = result.data[1];
         setRoles(roles);
@@ -237,16 +236,15 @@ const ProofTemplate = () => {
       console.error("Error fetching roles:", error);
       playSound("/sounds/failure.mp3");
       toast.error("Failed to fetch roles");
+    } finally {
+      setLoadingRoles(false);
     }
   };
 
   useEffect(() => {
-    console.log("isAuthenticated:", isAuthenticated);
     if (isAuthenticated) {
-      //fetchTemplates();
-     // fetchROles fetches for pip up
-     fetchRoles();
-     //fetches for pulling role manually
+      fetchTemplates();
+      fetchRoles();
       fetchOrganizationRoles();
     }
   }, [isAuthenticated]);
@@ -370,10 +368,9 @@ const ProofTemplate = () => {
     };
 
     const url = editingTemplateIndex !== null
-      ? `/api/mobile-verifier/v1/proof-templates/${templates[editingTemplateIndex].id}`
-      : "/api/mobile-verifier/v1/proof-templates";
+      ? `${auth_api_url}/mobile-verifier/v1/proof-templates/${templates[editingTemplateIndex].id}`
+      : `${auth_api_url}/mobile-verifier/v1/proof-template`;
     const method = editingTemplateIndex !== null ? "PATCH" : "POST";
-
     try {
       const response = await fetch(url, {
         method,
@@ -386,8 +383,8 @@ const ProofTemplate = () => {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to ${editingTemplateIndex !== null ? "update" : "add"} template: ${errorText}`);
+        const errorText = await response.json();
+        throw new Error(`Failed to ${editingTemplateIndex !== null ? "update" : "add"} template: ${errorText.message}`);
       }
 
       const result = await response.json();
@@ -416,32 +413,16 @@ const ProofTemplate = () => {
     } catch (error) {
       console.error(`Error ${editingTemplateIndex !== null ? "updating" : "adding"} template:`, error);
       playSound("/sounds/failure.mp3");
-      toast.error(`Failed to ${editingTemplateIndex !== null ? "update" : "add"} template`);
+      toast.error(`${error.message}`);
     }
   };
 
   // Columns for the table
   const columns = [
-    { accessorKey: "id", header: "Template ID", cell: (info) => info.getValue(), enableSorting: true },
+    { accessorKey: "templateId", header: "Template ID", cell: (info) => info.getValue(), enableSorting: true },
     { accessorKey: "name", header: "Template Name", cell: (info) => info.getValue(), enableSorting: true },
     { accessorKey: "version", header: "Version", cell: (info) => info.getValue(), enableSorting: true },
-    { accessorKey: "description", header: "Description", cell: (info) => info.getValue(), enableSorting: true },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: (info) => {
-        return (
-          <div className="flex justify-end gap-2">
-            <button
-              className="text-emerald-400 border border-emerald-400 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-green-50 transition-colors"
-              onClick={() => openMainModal(info.row.index)}
-            >
-              Edit
-            </button>
-          </div>
-        );
-      },
-    },
+    { accessorKey: "description", header: "Description", cell: (info) => info.getValue(), enableSorting: true }
   ];
 
   return (
@@ -457,10 +438,6 @@ const ProofTemplate = () => {
         draggable
         pauseOnHover
       />
-
-      {/* Organization Templates Section */}
-      
-     
 
       {/* Search and Add Template Section */}
       <div className="flex flex-col md:flex-row gap-4 mb-3">
@@ -494,8 +471,10 @@ const ProofTemplate = () => {
       </div>
 
       {/* Table Component */}
-      {templates.length === 0 ? (
-        <p className="text-center pt-4 text-red-400">No templates found/Fetched</p>
+      {loading ? (
+        <p className="text-center pt-8 text-gray-500">Loading templates...</p>
+      ) : templates.length === 0 ? (
+        <p className="text-center pt-4 text-red-400">No templates found</p>
       ) : (
         <TableComponent
           columns={columns}

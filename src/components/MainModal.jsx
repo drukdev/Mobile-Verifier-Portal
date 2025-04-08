@@ -52,11 +52,11 @@ const MainModal = ({
   return (
     <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl">
-        <h3 className="text-xl font-semibold mb-4">Add/Edit Proof Template</h3>
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
-          <div className="grid grid-cols-2 gap-4 mb-4">
+        <h3 className="text-xl font-semibold mb-4 text-gray-500">Add/Edit Proof Template</h3>
+        <form onSubmit={ handleSubmit(handleFormSubmit)}>
+          <div className="grid grid-cols-2 gap-4 mb-4 text-gray-500">
             <div>
-              <label htmlFor="templateName" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="templateName" className="block text-sm font-medium text-gray-500 mb-2">
                 Template Name
               </label>
               <input
@@ -71,7 +71,7 @@ const MainModal = ({
               )}
             </div>
             <div>
-              <label htmlFor="templateId" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="templateId" className="block text-sm font-medium text-gray-500 mb-2">
                 Template ID
               </label>
               <input
@@ -89,7 +89,7 @@ const MainModal = ({
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="role" className="block text-sm font-medium text-gray-500 mb-2">
                 Role
               </label>
               <div className="relative" ref={dropdownRef}>
@@ -134,7 +134,7 @@ const MainModal = ({
               {errors.role && <p className="text-red-500 text-sm">{errors.role.message}</p>}
             </div>
             <div>
-              <label htmlFor="version" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="version" className="block text-sm font-medium text-gray-500 mb-2">
                 Version
               </label>
               <input
@@ -157,7 +157,7 @@ const MainModal = ({
           </div>
 
           <div className="mb-4">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-500 mb-2">
               Description
             </label>
             <textarea
@@ -205,8 +205,8 @@ const MainModal = ({
               </tbody>
             </table>
             <button
-              className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-xs font-bold mt-4 hover:bg-emerald-600 transition-colors"
-              onClick={() => openSchemaModal()}
+              className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-xs font-bold mt-4 text-gray-500 hover:bg-emerald-600 transition-colors"
+              onClick={(e) => { e.preventDefault(); openSchemaModal()}}
             >
               Add Schema
             </button>
