@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useAuth } from "../../context/AuthContext";
 
 
 const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
-  const { webhookAuth } = useAuth();
   const [formData, setFormData] = useState({
     webhookId: "",
     webhookURL: "",
@@ -18,7 +16,6 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
   });
   useEffect(() => {
     if (organization) {
-      webhookAuth()
       const auth = {};
       setFormData({
         webhookId: organization.orgId || "",
@@ -71,9 +68,9 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
           }
         }
       };
-      const webhook_api_url = import.meta.env.VITE_API_BASE_URL;
+      const webhook_api_url = import.meta.env.VITE_WEBHOOK_URL;
       const url = `${webhook_api_url}/webhook/v1/register`
-            const token = localStorage.getItem("webhookToken");
+      const token = localStorage.getItem("authToken");
             const response = await fetch(url, {
               method: "POST",
               headers: {
@@ -83,8 +80,8 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
               body: JSON.stringify(payload),
             });
             if (!response.ok) {
-              const errorText = await response.text();
-              throw new Error(errorText || "Failed to process request");
+              const errorText = await response.json();
+              throw new Error(`error ${errorText} || Failed to process request`);
             }
       console.log("Submitting:", payload);
       toast.success(`Webhook Created Successfully for ${response.webhookId}`);
@@ -93,8 +90,6 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
     } catch (error) {
       toast.error(error.message || "An error occurred");
     }
-    localStorage.removeItem('webhookToken');
-
   };
 
   if (!isOpen) return null;
