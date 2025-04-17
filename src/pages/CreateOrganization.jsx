@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import AddOrganizationModal from "./AddOrganizationModal";
-import TableComponent from "../components/TableComponent";
+import AddOrganizationModal from   "../components/admin/AddOrganizationModal";
+import WebHookModal from '../components/admin/WebHookModal';
+import TableComponent from "../components/layout/TableComponent";
 import { useAuth } from "../context/AuthContext";
 
 const CreateOrganization = () => {
   const { isAuthenticated, logout } = useAuth();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
+  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
   const [organizations, setOrganizations] = useState([]);
+  const [webhookDetails, setWebhookDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
@@ -20,6 +23,7 @@ const CreateOrganization = () => {
     const audio = new Audio(soundFile);
     audio.play();
   };
+
   const auth_api_url = import.meta.env.VITE_AUTH_API_URL;
 
   const handleUnauthorized = () => {
@@ -72,6 +76,11 @@ const CreateOrganization = () => {
     setIsEditModalOpen(true);
   };
 
+  const handleHook = (organization) => {
+    setSelectedOrganization(organization);
+    setIsWebhookModalOpen(true);
+  };
+
   const handleDelete = (organizationId) => {
     setSelectedOrganization(organizations.find((org) => org.orgId === organizationId));
     setIsDeleteModalOpen(true);
@@ -82,7 +91,8 @@ const CreateOrganization = () => {
 
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`${auth_api_url}/ndi-mobile-verifier/v1/organization/${selectedOrganization.orgId}`,
+      const response = await fetch(
+        `${auth_api_url}/ndi-mobile-verifier/v1/organization/${selectedOrganization.orgId}`,
         {
           method: "DELETE",
           headers: {
@@ -127,7 +137,6 @@ const CreateOrganization = () => {
     { accessorKey: "orgId", header: "Organization ID" },
     { accessorKey: "orgName", header: "Organization Name" },
     { accessorKey: "url", header: "Service URL" },
-    { accessorKey: "publicDid", header: "Public DID" },
     {
       id: "actions",
       header: "Actions",
@@ -139,16 +148,20 @@ const CreateOrganization = () => {
           >
             Edit
           </button>
+          <button
+            onClick={() => handleHook(row.original)}
+            className="text-emerald-400 border border-emerald-400 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-green-50 transition-colors"
+          >
+            Register Webhook
+          </button>
         </div>
       ),
     },
   ];
-// flex flex-col md:flex-row gap-4 mb-4 px-1 py-4 bg-gray-50 rounded-lg
+
   return (
     <div className="flex-1 mt-4 overflow-x-auto">
       <ToastContainer position="top-right" autoClose={3000} />
-      
-      {/* Updated Search and Add Organization Section */}
       <div className="flex flex-col md:flex-row gap-4 mb-4">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-500 mb-2">Search Organizations</label>
@@ -168,7 +181,7 @@ const CreateOrganization = () => {
         <div className="flex items-end">
           <button
             className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors h-[42px]"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsAddOrgModalOpen(true)}
             disabled={!isAuthenticated}
           >
             Add New Organization
@@ -192,11 +205,17 @@ const CreateOrganization = () => {
       )}
 
       <AddOrganizationModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isAddOrgModalOpen}
+        onClose={() => setIsAddOrgModalOpen(false)}
         onSuccess={handleAddSuccess}
       />
 
+      <WebHookModal
+        isOpen={isWebhookModalOpen}
+        onClose={() => setIsWebhookModalOpen(false)}
+        onSuccess={handleAddSuccess}
+        organization={selectedOrganization}
+      />
       {isEditModalOpen && (
         <AddOrganizationModal
           isOpen={isEditModalOpen}

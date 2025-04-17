@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
-import TableComponent from "../components/TableComponent";
+import TableComponent from "../components/layout/TableComponent";
 import { useAuth } from "../context/AuthContext";
 
 const VerifierUser = () => {
@@ -24,14 +23,12 @@ const VerifierUser = () => {
   const [selectedStatus, setSelectedStatus] = useState("ACTIVE");
 
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
     reset,
     control,
-    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -48,7 +45,7 @@ const VerifierUser = () => {
     const audio = new Audio(soundFile);
     audio.play();
   };
-  const auth_api_url = import.meta.env.VITE_API_BASE_URL;
+  const base_api_url = import.meta.env.VITE_API_BASE_URL;
 
   const fetchUsers = async () => {
     const token = localStorage.getItem("authToken");
@@ -59,7 +56,7 @@ const VerifierUser = () => {
     }
 
     try {
-      const response = await fetch(`${auth_api_url}/mobile-verifier/v1/verifier-user?pageSize=300`, {
+      const response = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-user?pageSize=300`, {
         method: "GET",
         headers: {
           accept: "*/*",
@@ -68,10 +65,10 @@ const VerifierUser = () => {
       });
 
       const result = await response.json();
-      console.log(`response is ${response}`)
        if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to fetch users: ${errorText}`);
+
+        throw new Error(`Failed to fetch users11: ${errorText}`);
       }
 
       if (result.data && Array.isArray(result.data) && result.data.length > 1) {
@@ -90,14 +87,13 @@ const VerifierUser = () => {
 
   const fetchRoles = async () => {
     const token = localStorage.getItem("authToken");
-
     if (!token) {
       toast.error("You are not authenticated");
       return;
     }
     //Logic to pass pageSize as query parameter pending
     try {
-      const response = await fetch(`${auth_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`, {
+      const response = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`, {
         method: "GET",
         headers: {
           accept: "*/*",
@@ -138,7 +134,6 @@ const VerifierUser = () => {
       const nameParts = user.username.split(" ");
       const first_name = nameParts[0] || "";
       const last_name = nameParts.slice(1).join(" ") || "";
-      
       const formValues = {
         first_name,
         last_name,
@@ -147,7 +142,6 @@ const VerifierUser = () => {
         role: user.verifierRole?.role || "",
         status: user.statusId === 1 ? "ACTIVE" : user.statusId === 2 ? "SUSPENDED" : "REVOKED",
       };
-      
       reset(formValues);
       setIsEditing(true);
       setEditingUserId(user.id);
@@ -183,7 +177,6 @@ const VerifierUser = () => {
 
   const onSubmit = async (data) => {
     const token = localStorage.getItem("authToken");
-
     if (!token) {
       toast.error("You are not authenticated");
       return;
@@ -219,7 +212,7 @@ const VerifierUser = () => {
 
     try {
       if (isEditing) {
-        const updateResponse = await fetch(`${auth_api_url}/mobile-verifier/v1/verifier-user/${editingUserId}`, {
+        const updateResponse = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-user/${editingUserId}`, {
           method: "PATCH",
           headers: {
             accept: "*/*",
@@ -237,7 +230,7 @@ const VerifierUser = () => {
         playSound("/sounds/success.mp3");
         toast.success("User updated successfully!");
       } else {
-        const createResponse = await fetch(`${auth_api_url}/mobile-verifier/v1/verifier-user`, {
+        const createResponse = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-user`, {
           method: "POST",
           headers: {
             accept: "*/*",
@@ -248,7 +241,7 @@ const VerifierUser = () => {
         });
 
         if (!createResponse.ok) {
-          const errorText = await createResponse.text();
+          const errorText =  await createResponse.text();
           throw new Error(`Failed to create user: ${errorText}`);
         }
 
@@ -257,7 +250,6 @@ const VerifierUser = () => {
         playSound("/sounds/success.mp3");
         toast.success("User added successfully!");
       }
-      
       closeModal();
       fetchUsers();
     } catch (error) {
@@ -280,7 +272,7 @@ const VerifierUser = () => {
     }
 
     try {
-      const response = await fetch(`${auth_api_url}/mobile-verifier/v1/verifier-user/${userToDelete.id}`, {
+      const response = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-user/${userToDelete.id}`, {
         method: "DELETE",
         headers: {
           accept: "*/*",
@@ -319,7 +311,7 @@ const VerifierUser = () => {
     }
 
     try {
-      const response = await fetch(`${auth_api_url}/mobile-verifier/v1/verifier-user/invite`, {
+      const response = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-user/invite`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -349,8 +341,8 @@ const VerifierUser = () => {
   const openStatusModal = (user) => {
     setSelectedUserForStatus(user);
     setSelectedStatus(
-      user.statusId === 1 ? "ACTIVE" : 
-      user.statusId === 2 ? "SUSPENDED" : 
+      user.statusId === 3 ? "ACTIVE" : 
+      user.statusId === 4 ? "SUSPENDED" : 
       "REVOKED"
     );
     setIsStatusModalOpen(true);
@@ -372,7 +364,7 @@ const VerifierUser = () => {
 
     try {
       const response = await fetch(
-        `${auth_api_url}/mobile-verifier/v1/verifier-user/revoke_suspend?id=
+        `${base_api_url}/mobile-verifier/v1/verifier-user/revoke_suspend?id=
         ${encodeURIComponent(selectedUserForStatus.id)}&status=${encodeURIComponent(selectedStatus)}`,
         {
           method: "POST",
@@ -383,7 +375,6 @@ const VerifierUser = () => {
           },
         }
       );
-    
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to fetch roles: ${errorText}`);
@@ -493,8 +484,7 @@ const VerifierUser = () => {
   return (
     <div className="flex-1 mt-4 overflow-x-auto">
       <ToastContainer />
-      
-      {/* Updated Search and Add User Section */} 
+      {/* Updated Search and Add User Section */}
       <div className="flex flex-col md:flex-row gap-4 mb-3">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-500 mb-1">Search Users</label>

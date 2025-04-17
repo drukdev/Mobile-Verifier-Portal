@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
 const FaqsCard = (props) => {
   const answerElRef = useRef();
@@ -13,7 +13,7 @@ const FaqsCard = (props) => {
   };
 
   return (
-    <div
+     <div
       className="space-y-2 mt-1 overflow-hidden border-b border-emerald-400"
       key={idx}
       onClick={handleOpenAnswer}

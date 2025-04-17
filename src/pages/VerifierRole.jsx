@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
-import TableComponent from "../components/TableComponent";
+import TableComponent from "../components/layout/TableComponent";
 import { useAuth } from "../context/AuthContext";
 
 const VerifierRole = () => {
@@ -15,7 +15,7 @@ const VerifierRole = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState(null);
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
   // Initialize react-hook-form
@@ -26,7 +26,7 @@ const VerifierRole = () => {
     setValue,
     formState: { errors },
   } = useForm();
-  const auth_api_url = import.meta.env.VITE_API_BASE_URL;
+  const base_api_url = import.meta.env.VITE_API_BASE_URL;
 
   const handleUnauthorized = () => {
       toast.error("Session expired. Please login again.");
@@ -47,11 +47,10 @@ const VerifierRole = () => {
     if (!token) {
       toast.error("You are not authenticated");
       return;
-    }    
+    }
 
     try {
-      const url = `${auth_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`;
-      console.log(`this sit the url ${url}`);
+      const url = `${base_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`;
       //sconst API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
@@ -68,7 +67,6 @@ const VerifierRole = () => {
         handleUnauthorized();
         return;
       }
-      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to fetch roles: ${errorText}`);
@@ -106,8 +104,8 @@ const VerifierRole = () => {
     }
 
     const url = editingRole
-      ? `${auth_api_url}/mobile-verifier/v1/verifier-role/${editingRole.id}`
-      : `${auth_api_url}/mobile-verifier/v1/verifier-role/verifier-roles`;
+      ? `${base_api_url}/mobile-verifier/v1/verifier-role/${editingRole.id}`
+      : `${base_api_url}/mobile-verifier/v1/verifier-role/verifier-roles`;
     const method = editingRole ? "PATCH" : "POST";
     try {
       const response = await fetch(url, {
@@ -171,7 +169,7 @@ const VerifierRole = () => {
 
     try {
       const response = await fetch(
-        `${auth_api_url}/mobile-verifier/v1/verifier-role/${roleToDelete.id}`,
+        `${base_api_url}/mobile-verifier/v1/verifier-role/${roleToDelete.id}`,
         {
           method: "DELETE",
           headers: {
@@ -207,7 +205,6 @@ const VerifierRole = () => {
   const columns = [
     { accessorKey: "id", header: "Role ID", cell: (info) => info.getValue(), enableSorting: true },
     { accessorKey: "role", header: "Role Name", cell: (info) => info.getValue(), enableSorting: true },
-    
   ];
 {/*{
       id: "actions",

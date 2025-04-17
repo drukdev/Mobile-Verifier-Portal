@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './components/Login';
-import Dashboard from './pages/Dashboard';
+import Login from './pages/Login';
+import Dashboard from './components/layout/Dashboard';
 import { useAuth } from './context/AuthContext';
 import VerifierUser from './pages/VerifierUser';
 import ProofTemplate from './pages/ProofTemplate';
@@ -18,8 +18,7 @@ const App = () => {
 
   // Determine the default dashboard route based on role
   const getDefaultDashboardRoute = () => {
-    if (!isAuthenticated) return "/login";
-    
+    if (!isAuthenticated) return "/login"; 
     switch(role) {
       case "client":
         return "/dashboard/verifier-role";

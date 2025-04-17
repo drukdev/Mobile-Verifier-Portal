@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast, ToastContainer } from 'react-toastify';
@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useForm } from 'react-hook-form';
 import logo from '../assets/images/logo.png';
 import rightImage from '../assets/images/right-image.png';
+
 
 const Login = () => {
   const {
@@ -17,8 +18,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
-  const audioRef = useRef(null);
-
   const playSound = (type) => {
     try {
       const soundFile = type === 'success' ? '/sounds/success.mp3' : '/sounds/failure.mp3';
@@ -48,10 +47,8 @@ const Login = () => {
     const { clientId, clientSecret } = data;
     const auth_api_url = import.meta.env.VITE_AUTH_API_URL;
     const role = import.meta.env.VITE_ROLE;
-
     setLoading(true);
     setError('');
-
     try {
       const response = await fetch(`${auth_api_url}/authentication/v1/authenticate`, {
         method: 'POST',
@@ -64,38 +61,29 @@ const Login = () => {
           client_secret: clientSecret,
         }),
       });
-
-      const responseData = await response.json();
+      //
 
       if (!response.ok) {
-        let errorMessage = 'Authentication failed';
-        
+        let errorMessage = '';
         if (response.status === 400) {
-          errorMessage = responseData.error_description || 'Invalid Client ID or Secret';
-        } else if (response.status === 401) {
-          errorMessage = 'Unauthorized: Invalid credentials';
+          errorMessage = 'Invalid Client ID or Secret';
+        } else if (response.status === 404) {
+          errorMessage = 'Backend API not found/not reachable';
         } else if (response.status === 403) {
           errorMessage = 'Forbidden: Access denied';
         } else {
-          errorMessage = responseData.message || 'Authentication failed. Please try again.';
+          errorMessage = 'An unexpected error occurred';
         }
-        
         throw new Error(errorMessage);
       }
-
+      const responseData = await response.json();
       const { access_token, expires_in } = responseData;
-      console.log(`access token: ${access_token}`);
       const expiryTime = new Date().getTime() + expires_in * 1000;
       localStorage.setItem('authToken', access_token);
       localStorage.setItem('authTokenExpiry', expiryTime);
       login(access_token, expiryTime);
-      
-      // Play success sound
       playSound('success');
-      
-      // Show success toast and wait for it to complete
       await showSuccessToast();
-
       // Navigate after toast is shown
       if (role === "client") {
         navigate('/dashboard/verifier-role');
@@ -126,7 +114,7 @@ const Login = () => {
   return (
     <div className="min-h-screen flex bg-white">
       {/* ToastContainer must be present */}
-      <ToastContainer 
+      <ToastContainer
         position="top-right"
         autoClose={5000}
         hideProgressBar={false}
@@ -138,7 +126,6 @@ const Login = () => {
         pauseOnHover
         theme="colored"
       />
-      
       {/* Left Side: Login Form */}
       <div className="w-full md:w-1/2 flex flex-col p-6 md:p-8 pl-6 md:pl-10 bg-white">
         <div className="flex justify-start pl-1 md:pl-4">
@@ -159,7 +146,7 @@ const Login = () => {
                   <input
                     id="clientId"
                     type="text"
-                    {...register('clientId', { 
+                    {...register('clientId', {
                       required: 'Client ID is required',
                       minLength: {
                         value: 3,

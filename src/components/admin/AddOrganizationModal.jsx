@@ -17,6 +17,7 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
 
   useEffect(() => {
     if (organization) {
+      console.log(`this organization`, organization);
       setFormData({
         organizationName: organization.orgName || "",
         organizationId: organization.orgId || "",

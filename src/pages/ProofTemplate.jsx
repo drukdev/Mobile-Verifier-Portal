@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useForm, Controller } from "react-hook-form";
+import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
-import TableComponent from "../components/TableComponent";
-import MainModal from "../components/MainModal";
-import SchemaModal from "../components/SchemaModal";
 import { useAuth } from "../context/AuthContext";
-
+import TableComponent from "../components/layout/TableComponent";
+import MainModal from "../components/client/MainModal";
+import SchemaModal from "../components/client/SchemaModal";
 const ProofTemplate = () => {
   // State variables
   const [isMainModalOpen, setIsMainModalOpen] = useState(false);
@@ -56,61 +55,12 @@ const ProofTemplate = () => {
     const audio = new Audio(soundFile);
     audio.play();
   };
-  const auth_api_url = import.meta.env.VITE_API_BASE_URL;
-
-  // Fetch organization-specific templates
-  const fetchOrganizationTemplates = async () => {
-    const token = localStorage.getItem("authToken");
-    console.log(`this is token ${token}`);
-    
-    if (!token) {
-      toast.error("You are not authenticated");
-      return;
-    }
-
-    if (!selectedOrgRole || !orgId) {
-      toast.error("Please select a role and enter Organization ID");
-      return;
-    }
-
-    try {
-      const url = `${auth_api_url}/ndi-mobile-verifier/v1/organization/proof-templates?roleId=${encodeURIComponent(selectedOrgRole)}&orgId=${encodeURIComponent(orgId)}`;
-      
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          accept: "*/*",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch organization templates: ${errorText}`);
-      }
-
-      const result = await response.json();
-
-      if (result.data && Array.isArray(result.data)) {
-        setTemplates(result.data);
-        playSound("/sounds/success.mp3");
-        toast.success("Organization templates fetched successfully");
-      } else {
-        console.error("Invalid data format:", result);
-        toast.error("Invalid data format received from the server");
-      }
-    } catch (error) {
-      console.error("Error fetching organization templates:", error);
-      playSound("/sounds/failure.mp3");
-      toast.error("Failed to fetch organization templates");
-    }
-  };
+  const base_api_url = import.meta.env.VITE_API_BASE_URL;
 
   // Fetch organization roles
   const fetchOrganizationRoles = async () => {
     setLoadingOrganizationRoles(true);
     const token = localStorage.getItem("authToken");
-    
     if (!token) {
       toast.error("You are not authenticated");
       setLoadingOrganizationRoles(false);
@@ -118,8 +68,7 @@ const ProofTemplate = () => {
     }
 
     try {
-      const url = `${auth_api_url}/mobile-verifier/v1/verifier-role`;
-      
+      const url = `${base_api_url}/mobile-verifier/v1/verifier-role`;
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -164,7 +113,7 @@ const ProofTemplate = () => {
     }
 
     try {
-      const url = `${auth_api_url}/mobile-verifier/v1/proof-template?pageSize=300`;
+      const url = `${base_api_url}/mobile-verifier/v1/proof-template?pageSize=300`;
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -208,7 +157,7 @@ const ProofTemplate = () => {
     }
 
     try {
-      const url = `${auth_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`;
+      const url = `${base_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`;
 
       const response = await fetch(url, {
         method: "GET",
@@ -368,8 +317,8 @@ const ProofTemplate = () => {
     };
 
     const url = editingTemplateIndex !== null
-      ? `${auth_api_url}/mobile-verifier/v1/proof-templates/${templates[editingTemplateIndex].id}`
-      : `${auth_api_url}/mobile-verifier/v1/proof-template`;
+      ? `${base_api_url}/mobile-verifier/v1/proof-templates/${templates[editingTemplateIndex].id}`
+      : `${base_api_url}/mobile-verifier/v1/proof-template`;
     const method = editingTemplateIndex !== null ? "PATCH" : "POST";
     try {
       const response = await fetch(url, {

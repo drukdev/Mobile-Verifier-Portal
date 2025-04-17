@@ -9,10 +9,10 @@ import {
   FaFileAlt,
 } from 'react-icons/fa';
 import { RiOrganizationChart } from 'react-icons/ri';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import logo from '../assets/images/logo1.png';
-import logocollapse from '../assets/images/logo-collapse.png';
+import logo from '../../assets/images/logo1.png';
+import logocollapse from '../../assets/images/logo-collapse.png';
 
 const Sidebar = ({ onToggle }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
