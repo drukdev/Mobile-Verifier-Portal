@@ -19,7 +19,6 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
   useEffect(() => {
     if (organization) {
       webhookAuth()
-      
       const auth = {};
       setFormData({
         webhookId: organization.orgId || "",
@@ -94,7 +93,7 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
     } catch (error) {
       toast.error(error.message || "An error occurred");
     }
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('webhookToken');
 
   };
 
@@ -107,7 +106,7 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
           <h2 className="text-xl font-semibold text-gray-800">
             {organization ? "Register WebHook" : "Register New WebHook"}
           </h2>
-          <button 
+          <button
             onClick={onClose} 
             className="text-gray-500 hover:text-gray-700 transition-colors"
           >

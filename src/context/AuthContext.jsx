@@ -32,6 +32,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('authTokenExpiry');
+    localStorage.removeItem('webhookToken');
     setIsAuthenticated(false);
   };
 
