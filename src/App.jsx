@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './components/layout/Dashboard';
 import { useAuth } from './context/AuthContext';
@@ -7,51 +7,85 @@ import VerifierUser from './pages/VerifierUser';
 import ProofTemplate from './pages/ProofTemplate';
 import VerifierRole from './pages/VerifierRole';
 import CreateOrganization from './pages/CreateOrganization';
-import Settings from './pages/Settings';
+import Settings from './pages/FAQ';
 import PrivacyPolicy from './pages/utils/PrivacyPolicy';
 import TermsOfReference from './pages/utils/TermsOfReference';
+import LoadingSpinner from './components/layout/LoadingSpinner';
 
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const { isAuthenticated, role, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) return <LoadingSpinner />;
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (requiredRole && role !== requiredRole) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return children;
+};
 
 const App = () => {
-  const { isAuthenticated, role } = useAuth();
-  console.log("App.js - isAuthenticated:", isAuthenticated, "Role:", role); // Debugging
+  const { isAuthenticated, role, isLoading } = useAuth();
 
-  // Determine the default dashboard route based on role
-  const getDefaultDashboardRoute = () => {
-    if (!isAuthenticated) return "/login"; 
-    switch(role) {
-      case "client":
-        return "/dashboard/verifier-role";
-      case "admin":
-        return "/dashboard/create-organization";
-      default:
-        return "/dashboard"; // Fallback for unknown roles
-    }
-  };
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <Router>
       <Routes>
-        {/* Redirect to appropriate dashboard route if authenticated, otherwise to /login */}
-        <Route path="/" element={<Navigate to={getDefaultDashboardRoute()} />} />
-
         {/* Login Route */}
-        <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to={getDefaultDashboardRoute()} />} />
+        <Route 
+          path="/login" 
+          element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} 
+        />
 
         {/* Dashboard Route with Nested Routes */}
-        <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />}>
-          <Route index element={<Navigate to={role === "client" ? "verifier-role" : "create-organization"} />} />
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to={role === "client" ? "verifier-role" : "create-organization"} replace />} />
           <Route path="verifier-role" element={<VerifierRole />} />
           <Route path="verifier-user" element={<VerifierUser />} />
           <Route path="proof-templates" element={<ProofTemplate />} />
           <Route path="create-organization" element={<CreateOrganization />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="faq" element={<Settings />} />
           <Route path="privacy-policy" element={<PrivacyPolicy />} />
           <Route path="terms-of-service" element={<TermsOfReference />} />
         </Route>
 
+        {/* Root Redirect */}
+        <Route 
+          path="/" 
+          element={
+            <Navigate 
+              to={isAuthenticated ? "/dashboard" : "/login"} 
+              replace 
+            />
+          } 
+        />
+
         {/* Catch-all Route */}
-        <Route path="*" element={<Navigate to={getDefaultDashboardRoute()} />} />
+        <Route 
+          path="*" 
+          element={
+            <Navigate 
+              to={isAuthenticated ? "/dashboard" : "/login"} 
+              state={{ from: location }} 
+              replace 
+            />
+          } 
+        />
       </Routes>
     </Router>
   );

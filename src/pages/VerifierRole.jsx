@@ -29,7 +29,7 @@ const VerifierRole = () => {
   const base_api_url = import.meta.env.VITE_API_BASE_URL;
 
   const handleUnauthorized = () => {
-      toast.error("Session expired. Please login again.");
+      toast.error("Unauthorized");
       logout();
     };
 
@@ -51,7 +51,6 @@ const VerifierRole = () => {
 
     try {
       const url = `${base_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`;
-      //sconst API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
       const response = await fetch(url, {

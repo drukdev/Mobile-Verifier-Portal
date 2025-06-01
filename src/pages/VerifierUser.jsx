@@ -407,6 +407,10 @@ const VerifierUser = () => {
       accessorKey: "verifierRole.role",
     },
     {
+      header: "Role ID",
+      accessorKey: "verifierRole.id",
+    },
+    {
       header: "Status",
       accessorKey: "statusId",
       cell: ({ row }) => {

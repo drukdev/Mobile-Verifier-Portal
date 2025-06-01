@@ -65,7 +65,7 @@ const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    className="p-2 pl-4 border border-gray-300 text-gray-700 text-sm"
+                    className="p-2 border border-gray-300 text-gray-700 text-sm"
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>

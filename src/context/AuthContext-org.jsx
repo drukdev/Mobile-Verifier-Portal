@@ -1,64 +1,45 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [authState, setAuthState] = useState({
-    isAuthenticated: false,
-    role: localStorage.getItem('userRole') || 'client',
-    isLoading: true
-  });
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const role = import.meta.env.VITE_ROLE;
+
+
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     const expiryTime = localStorage.getItem('authTokenExpiry');
-    const storedRole = localStorage.getItem('userRole');
 
     if (token && expiryTime && new Date().getTime() < expiryTime) {
-      setAuthState({
-        isAuthenticated: true,
-        role: storedRole || 'client',
-        isLoading: false
-      });
+      setIsAuthenticated(true);
     } else {
       localStorage.removeItem('authToken');
       localStorage.removeItem('authTokenExpiry');
-      localStorage.removeItem('userRole');
-      setAuthState({
-        isAuthenticated: false,
-        role: 'client',
-        isLoading: false
-      });
+      setIsAuthenticated(false);
     }
   }, []);
 
-  const login = (token, expiryTime, userRole) => {
+  const login = (token, expiryTime) => {
     localStorage.setItem('authToken', token);
     localStorage.setItem('authTokenExpiry', expiryTime);
-    localStorage.setItem('userRole', userRole);
-    setAuthState({
-      isAuthenticated: true,
-      role: userRole,
-      isLoading: false
-    });
+    setIsAuthenticated(true);
   };
 
   const logout = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('authTokenExpiry');
-    localStorage.removeItem('userRole');
-    setAuthState({
-      isAuthenticated: false,
-      role: 'client',
-      isLoading: false
-    });
+    setIsAuthenticated(false);
   };
-
   const value = useMemo(() => ({
-    ...authState,
+    isAuthenticated,
+    role,
     login,
-    logout
-  }), [authState]);
+    logout,
+  }), [isAuthenticated, role]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -93,11 +93,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
         throw new Error(errorText || "Failed to process request");
       }
 
-      toast.success(
-        organization
-          ? "Organization updated successfully!"
-          : "Organization added successfully!"
-      );
       onSuccess();
       onClose();
     } catch (error) {

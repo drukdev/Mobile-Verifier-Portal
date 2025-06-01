@@ -27,7 +27,7 @@ const CreateOrganization = () => {
   const auth_api_url = import.meta.env.VITE_AUTH_API_URL;
 
   const handleUnauthorized = () => {
-    toast.error("Session expired. Please login again.");
+    toast.error("Unauthorized");
     logout();
   };
 
@@ -124,13 +124,11 @@ const CreateOrganization = () => {
   const handleAddSuccess = async () => {
     await fetchOrganizations();
     playSound("/sounds/success.mp3");
-    toast.success("Organization added successfully");
   };
 
   const handleEditSuccess = async () => {
     await fetchOrganizations();
     playSound("/sounds/success.mp3");
-    toast.success("Organization updated successfully");
   };
 
   const columns = [

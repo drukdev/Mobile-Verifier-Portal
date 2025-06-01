@@ -124,8 +124,8 @@ const Sidebar = ({ onToggle }) => {
               <NavItem
                 icon={<FaQuestion className="text-emerald-500 group-hover:text-emerald-600" />}
                 label="FAQ"
-                path="/dashboard/settings"
-                active={location.pathname === '/dashboard/settings'}
+                path="/dashboard/faq"
+                active={location.pathname === '/dashboard/faq'}
                 isCollapsed={isCollapsed}
                 shouldShowLabel={shouldExpand}
               />

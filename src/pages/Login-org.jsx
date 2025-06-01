@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import logo from '../assets/images/logo.png';
 import rightImage from '../assets/images/right-image.png';
 
+
 const Login = () => {
   const {
     register,
@@ -15,15 +16,9 @@ const Login = () => {
   } = useForm();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState('client'); // 'client' or 'admin'
   const navigate = useNavigate();
   const { login } = useAuth();
-
-  const toggleRole = () => {
-    setRole(prevRole => (prevRole === 'client' ? 'admin' : 'client'));
-  };
-
-  const playSound = type => {
+  const playSound = (type) => {
     try {
       const soundFile = type === 'success' ? '/sounds/success.mp3' : '/sounds/failure.mp3';
       const audio = new Audio(soundFile);
@@ -34,23 +29,24 @@ const Login = () => {
   };
 
   const showSuccessToast = () => {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       toast.success('Login successful! Redirecting...', {
-        position: 'top-right',
+        position: "top-right",
         autoClose: 2000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        theme: 'colored',
-        onClose: resolve,
+        theme: "colored",
+        onClose: resolve
       });
     });
   };
 
-  const handleExternalAuthSubmit = async data => {
+  const handleExternalAuthSubmit = async (data) => {
     const { clientId, clientSecret } = data;
     const auth_api_url = import.meta.env.VITE_AUTH_API_URL;
+    const role = import.meta.env.VITE_ROLE;
     setLoading(true);
     setError('');
     try {
@@ -65,6 +61,7 @@ const Login = () => {
           client_secret: clientSecret,
         }),
       });
+      //
 
       if (!response.ok) {
         let errorMessage = '';
@@ -84,29 +81,30 @@ const Login = () => {
       const expiryTime = new Date().getTime() + expires_in * 1000;
       localStorage.setItem('authToken', access_token);
       localStorage.setItem('authTokenExpiry', expiryTime);
-      localStorage.setItem('userRole', role);
-      login(access_token, expiryTime, role);
+      login(access_token, expiryTime);
       playSound('success');
       await showSuccessToast();
-
-      if (role === 'client') {
+      // Navigate after toast is shown
+      if (role === "client") {
         navigate('/dashboard/verifier-role');
-      } else if (role === 'admin') {
+      } else if (role === "admin") {
         navigate('/dashboard/create-organization');
       } else {
         navigate('/dashboard/');
       }
+
     } catch (error) {
       setError(error.message);
+      // Play error sound and show error toast
       playSound('error');
       toast.error(error.message, {
-        position: 'top-right',
+        position: "top-right",
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
-        theme: 'colored',
+        theme: "colored"
       });
     } finally {
       setLoading(false);
@@ -115,6 +113,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex bg-white">
+      {/* ToastContainer must be present */}
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -127,50 +126,24 @@ const Login = () => {
         pauseOnHover
         theme="colored"
       />
-
       {/* Left Side: Login Form */}
       <div className="w-full md:w-1/2 flex flex-col p-6 md:p-8 pl-6 md:pl-10 bg-white">
         <div className="flex justify-start pl-1 md:pl-4">
           <img className="h-12 md:h-16 w-auto" src={logo} alt="Logo" />
         </div>
-
-        {/* Moved title up with increased padding */}
-        <div className="mt-8 text-center">
-          <h2 className="text-2xl ml-10 md:text-3xl font-extrabold text-gray-600">Mobile Verifier Portal</h2>
-        </div>
-
-        <div className="flex-grow flex items-center justify-center pl-16 pb-2 md:pb-32">
+        <div className="flex-grow flex items-center justify-center pl-16 pb-4 md:pb-32">
           <div className="w-full max-w-sm">
-            {/* Smaller greeting */}
-            <h4 className="mt-2 text-center text-xl font-medium text-gray-600">Kuzuzangpo!</h4>
-
-            {/* Removed background from role indicator */}
-            <p className="mt-1 text-center text-lg font-semibold text-gray-600">
-              Logging in as{' '}
-              <span className="text-emerald-600 font-bold">
-                {role === 'client' ? 'Client Admin' : 'NDI Admin'}
-              </span>
+            <h2 className="mt-2 text-center text-3xl md:text-3xl font-extrabold text-gray-900">Mobile Verifier Portal</h2>
+            <h4 className="mt-6 text-center text md:text-3xl font-extrabold text-gray-900">Kuzuzangpo!</h4>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              <span className="text-emerald-400">Login</span> to your Admin Portal
             </p>
-
-            {/* Moved role toggle above input fields and made smaller */}
-            <div className="text-center mt-8">
-              <button
-                onClick={toggleRole}
-                className="text-emerald-600 hover:text-emerald-800 text-xs font-semibold underline focus:outline-none"
-              >
-                Switch to {role === 'client' ? 'NDI Admin' : 'Client Admin'}
-              </button>
-            </div>
-
-            {error && <p className="text-red-500 text-sm mt-1 text-center">{error}</p>}
-
-            <form onSubmit={handleSubmit(handleExternalAuthSubmit)} className="mt-4 space-y-4">
+            {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
+            <form onSubmit={handleSubmit(handleExternalAuthSubmit)} className="mt-6 space-y-4">
               <input type="hidden" name="remember" value="true" />
               <div className="rounded-md shadow-sm -space-y-px">
                 <div className="mb-4">
-                  <label htmlFor="clientId" className="sr-only">
-                    Client ID
-                  </label>
+                  <label htmlFor="clientId" className="sr-only">Client ID</label>
                   <input
                     id="clientId"
                     type="text"
@@ -178,8 +151,8 @@ const Login = () => {
                       required: 'Client ID is required',
                       minLength: {
                         value: 3,
-                        message: 'Client ID must be at least 3 characters',
-                      },
+                        message: 'Client ID must be at least 3 characters'
+                      }
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 hover:border-emerald-400 transition-colors"
                     placeholder="Enter Client ID"
@@ -189,18 +162,16 @@ const Login = () => {
                   )}
                 </div>
                 <div className="mb-6">
-                  <label htmlFor="clientSecret" className="sr-only">
-                    Client Secret
-                  </label>
+                  <label htmlFor="clientSecret" className="sr-only">Client Secret</label>
                   <input
                     id="clientSecret"
                     type="password"
-                    {...register('clientSecret', {
+                    {...register('clientSecret', { 
                       required: 'Client Secret is required',
                       minLength: {
                         value: 6,
-                        message: 'Client Secret must be at least 6 characters',
-                      },
+                        message: 'Client Secret must be at least 6 characters'
+                      }
                     })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 hover:border-emerald-400 transition-colors"
                     placeholder="Enter Client Secret"
@@ -214,7 +185,7 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2 px-4 bg-emerald-500 text-white font-semibold rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2 px-4 bg-emerald-400 text-white font-semibold rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center">
