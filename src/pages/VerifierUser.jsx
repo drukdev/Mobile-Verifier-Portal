@@ -241,8 +241,8 @@ const VerifierUser = () => {
         });
 
         if (!createResponse.ok) {
-          const errorText =  await createResponse.text();
-          throw new Error(`Failed to create user: ${errorText}`);
+          //const errorText =  await createResponse.text();
+          throw new Error(`Failed to create user`);
         }
 
         const result = await createResponse.json();
@@ -253,7 +253,7 @@ const VerifierUser = () => {
       closeModal();
       fetchUsers();
     } catch (error) {
-      playSound("/sounds/failure.mp3");
+        playSound("/sounds/failure.mp3");
       toast.error(`${error.message}`);
     }
   };

@@ -186,7 +186,7 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
               name="authVersion"
               value={formData.authVersion}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
+              className={`w-full p-2 border  rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200`}
               disabled={isLoading}
             >
               <option value="v1">Version 1 (OAuth)</option>
@@ -203,16 +203,19 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
               name="webhookURL"
               value={formData.webhookURL}
               onChange={handleChange}
-              className={`w-full p-2 border ${errors.webhookURL ? "border-red-500" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400`}
+              className={`w-full p-2 border ${errors.webhookURL ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200`}
+
+
+
               required
               disabled={isLoading}
             />
             {errors.webhookURL && <p className="mt-1 text-sm text-red-600">{errors.webhookURL}</p>}
           </div>
 
-          <div className="transition-all duration-300 ease-in-out overflow-hidden">
+          <div className="transition-all duration-300 ease-in-out ">
             {formData.authVersion === "v1" ? (
-              <div className="space-y-4 border-t pt-4 mt-2">
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Authentication URL
@@ -222,7 +225,9 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
                     name="authUrl"
                     value={formData.authUrl}
                     onChange={handleChange}
-                    className={`w-full p-2 border ${errors.authUrl ? "border-red-500" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400`}
+                    className={`w-full p-2 border ${errors.authUrl ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200`}
+                   
+
                     required
                     disabled={isLoading}
                   />
@@ -252,7 +257,8 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
                     name="clientId"
                     value={formData.clientId}
                     onChange={handleChange}
-                    className={`w-full p-2 border ${errors.clientId ? "border-red-500" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400`}
+                    className={`w-full p-2 border ${errors.clientId ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200`}
+
                     required
                     disabled={isLoading}
                   />
@@ -268,7 +274,7 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
                     name="clientSecret"
                     value={formData.clientSecret}
                     onChange={handleChange}
-                    className={`w-full p-2 border ${errors.clientSecret ? "border-red-500" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400`}
+                    className={`w-full p-2 border ${errors.clientSecret ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200`}
                     required
                     disabled={isLoading}
                   />
@@ -276,7 +282,7 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
                 </div>
               </div>
             ) : (
-              <div className="border-t pt-4 mt-2">
+              <div className="transition-all duration-300 ease-in-out overflow-hidden">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Access Token
                 </label>
@@ -285,7 +291,7 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
                   name="token"
                   value={formData.token}
                   onChange={handleChange}
-                  className={`w-full p-2 border ${errors.token ? "border-red-500" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400`}
+                  className={`w-full p-2 border ${errors.token ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200`}
                   required
                   disabled={isLoading}
                 />

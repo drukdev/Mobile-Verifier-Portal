@@ -11,7 +11,6 @@ const CreateOrganization = () => {
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
   const [organizations, setOrganizations] = useState([]);
-  const [webhookDetails, setWebhookDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");

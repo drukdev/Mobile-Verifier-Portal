@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const TopNavbar = ({ title, isSidebarCollapsed }) => {
-  const { role, logout } = useAuth();
+  const { role } = useAuth();
   const navigate = useNavigate();
 
   return (
