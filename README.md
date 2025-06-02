@@ -1,20 +1,11 @@
 Mobile Verifier Portal
-A modern web application for mobile device verification built with React, Vite, and Tailwind CSS.
+A Mobile Verifier Web Portal, built with React, Vite, and Tailwind CSS.
 
-Features
-React 19 with Vite for fast development
+Functional Feature:
+NDI can register verifier organization and register their webhook
+Verifying Organizations can creat proof request for the required attributes to be verifier
+Verifying Organization can manage verifier user and verifier role
 
-React Router for navigation
-
-React Hook Form for form management
-
-TanStack Table for data tables
-
-Tailwind CSS for styling
-
-ESLint for code quality
-
-TypeScript support
 
 Getting Started
 Prerequisites
@@ -27,33 +18,20 @@ Clone the repository
 
 Install dependencies:
 
-bash
 pnpm install
-Available Scripts
 pnpm start: Runs the app in development mode
-
 pnpm build: Builds the app for production
-
 pnpm lint: Runs ESLint to check code quality
-
 pnpm preview: Previews the production build locally
 
 Environment Variables
 This project uses dotenv for environment variables. Create a .env file in the root directory with your configuration:
 
-VITE_API_URL=your_api_url_here
+VITE_AUTH_API_URL= Get it from NDI
+VITE_API_BASE_URL= Your Service URL
+VITE_WEBHOOK_URL= Get it from NDI
+
 Technologies Used
-React 19
-
-Vite
-
-Tailwind CSS
-
-React Router
-
-React Hook Form
-
-TanStack Table
 
 Contributing
 Fork the project
