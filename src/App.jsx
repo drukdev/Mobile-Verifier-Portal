@@ -11,6 +11,7 @@ import Settings from './pages/FAQ';
 import PrivacyPolicy from './pages/utils/PrivacyPolicy';
 import TermsOfReference from './pages/utils/TermsOfReference';
 import LoadingSpinner from './components/layout/LoadingSpinner';
+import FileUploadPage from './pages/FileUploadPage';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, role, isLoading } = useAuth();
@@ -59,6 +60,7 @@ const App = () => {
           <Route path="verifier-user" element={<VerifierUser />} />
           <Route path="proof-templates" element={<ProofTemplate />} />
           <Route path="create-organization" element={<CreateOrganization />} />
+          <Route path="schema-upload" element={<FileUploadPage />} />
           <Route path="faq" element={<Settings />} />
           <Route path="privacy-policy" element={<PrivacyPolicy />} />
           <Route path="terms-of-service" element={<TermsOfReference />} />

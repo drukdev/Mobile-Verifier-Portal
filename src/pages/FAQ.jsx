@@ -2,25 +2,26 @@ import React, { useRef, useState } from "react";
 
 const FaqsCard = (props) => {
   const answerElRef = useRef();
-  const [state, setState] = useState(false);
   const [answerH, setAnswerH] = useState("0px");
-  const { faqsList, idx } = props;
+  const { faqsList, idx, isActive, onClick } = props;
 
   const handleOpenAnswer = () => {
     const answerElH = answerElRef.current.childNodes[0].offsetHeight;
-    setState(!state);
     setAnswerH(`${answerElH + 20}px`);
+    onClick(idx);
   };
 
   return (
-     <div
-      className="space-y-2 mt-1 overflow-hidden border-b border-emerald-400"
+    <div
+      className="space-y-1 overflow-hidden border-b border-emerald-400"
       key={idx}
-      onClick={handleOpenAnswer}
     >
-      <h4 className="cursor-pointer pb-5 flex items-center justify-between text text-gray-700 font-medium">
+      <h4 
+        className="cursor-pointer pb-4 flex items-center justify-between text-gray-700 font-medium"
+        onClick={handleOpenAnswer}
+      >
         {faqsList.q}
-        {state ? (
+        {isActive ? (
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-5 w-5 text-emerald-400 ml-2"
@@ -29,9 +30,9 @@ const FaqsCard = (props) => {
             stroke="currentColor"
           >
             <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
               d="M20 12H4"
             />
           </svg>
@@ -54,11 +55,11 @@ const FaqsCard = (props) => {
       </h4>
       <div
         ref={answerElRef}
-        className="duration-300"
-        style={state ? { height: answerH } : { height: "0px" }}
+        className="duration-300 overflow-y-auto max-h-64"
+        style={isActive ? { height: answerH } : { height: "0px" }}
       >
-        <div>
-          <p className="text-gray-700">{faqsList.a}</p>
+        <div className="px-0 pb-6"> {/* Reduced side padding and added bottom padding */}
+          <p className="text-gray-600">{faqsList.a}</p>
         </div>
       </div>
     </div>
@@ -73,7 +74,7 @@ export default () => {
     },
     {
       q: "How to register on the NDI Verifier?",
-      a: "To register on the NDI Verifier, the first step is to set up a PIN for the NDI Verifier app. The organization verifier must then possess an Access Credential issued by a specific organization, which is stored in the Bhutan NDI Wallet. This allows the user to log in using the “Login with Bhutan NDI” option in the NDI Verifier when the Bhutan NDI Wallet is on the same device. If the Access Credential is stored in the Bhutan NDI Wallet on a different device, the user can select the “Login with Other Device” option in the NDI Verifier to log in.",
+      a: "To register on the NDI Verifier, the first step is to set up a PIN for the NDI Verifier app. The organization verifier must then possess an Access Credential issued by a specific organization, which is stored in the Bhutan NDI Wallet. This allows the user to log in using the 'Login with Bhutan NDI' option in the NDI Verifier when the Bhutan NDI Wallet is on the same device. If the Access Credential is stored in the Bhutan NDI Wallet on a different device, the user can select the 'Login with Other Device' option in the NDI Verifier to log in.",
     },
     {
       q: "Who can use the NDI Verifier?",
@@ -101,10 +102,16 @@ export default () => {
     },
   ];
 
+  const [activeIdx, setActiveIdx] = useState(null);
+
+  const handleCardClick = (idx) => {
+    setActiveIdx(activeIdx === idx ? null : idx);
+  };
+
   return (
-    <section className="leading-relaxed max-w  mt-8 mx-4 px-1 md:px-4">
+    <section className="leading-relaxed mt-8 mx-auto px-4 w-full max-w-3xl">
       <div className="space-y-2 text-center">
-        <h3 className="text text-gray-800 font-semibold">
+        <h3 className="text-2xl text-gray-800 font-semibold">
           Frequently Asked Questions
         </h3>
         <p className="text-gray-600 max-w-lg mx-auto text-sm">
@@ -112,9 +119,15 @@ export default () => {
           contact us 1109.
         </p>
       </div>
-      <div className="mt-10 max-w-xl mx-auto">
+      <div className="mt-10 w-full">
         {faqsList.map((item, idx) => (
-          <FaqsCard idx={idx} faqsList={item} />
+          <FaqsCard 
+            key={idx}
+            idx={idx} 
+            faqsList={item} 
+            isActive={activeIdx === idx}
+            onClick={handleCardClick}
+          />
         ))}
       </div>
     </section>

@@ -1,0 +1,31 @@
+// In your parent component
+const [isModalOpen, setIsModalOpen] = useState(false);
+
+const handleSaveSchema = async (schemaData) => {
+  try {
+    const token = localStorage.getItem("authToken");
+    const response = await fetch(`${base_api_url}/schemas`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(schemaData),
+    });
+
+    if (!response.ok) throw new Error("Failed to save schema");
+    
+    toast.success("Schema saved successfully");
+    setIsModalOpen(false);
+    // Refresh your data here if needed
+  } catch (error) {
+    toast.error(error.message);
+  }
+};
+
+// Render the modal
+<AddSchemaModal
+  isOpen={isModalOpen}
+  onClose={() => setIsModalOpen(false)}
+  saveSchema={handleSaveSchema}
+/>

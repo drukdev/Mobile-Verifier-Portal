@@ -4,7 +4,6 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import TableComponent from "../components/layout/TableComponent";
 import { useAuth } from "../context/AuthContext";
-import { v4 as uuidv4 } from 'uuid';
 
 const VerifierUser = () => {
   const [users, setUsers] = useState([]);
@@ -22,10 +21,6 @@ const VerifierUser = () => {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [selectedUserForStatus, setSelectedUserForStatus] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("ACTIVE");
-  const [userIdExists, setUserIdExists] = useState(false);
-  const [userIdChecking, setUserIdChecking] = useState(false);
-  const [isSendingInvitation, setIsSendingInvitation] = useState(false);
-  const [generatedUsername, setGeneratedUsername] = useState(""); // New state for generated username
 
   const { isAuthenticated } = useAuth();
 
@@ -34,14 +29,11 @@ const VerifierUser = () => {
     handleSubmit,
     reset,
     control,
-    watch,
     formState: { errors },
-    setValue,
   } = useForm({
     defaultValues: {
       first_name: "",
       last_name: "",
-      user_id: "",
       email: "",
       foundationID: "",
       role: "",
@@ -49,52 +41,11 @@ const VerifierUser = () => {
     },
   });
 
-  const watchFirstName = watch("first_name");
-  const watchLastName = watch("last_name");
-
-  // Generate username when first/last name changes
-  useEffect(() => {
-    if (watchFirstName || watchLastName) {
-      const newUsername = `${watchFirstName || ''}_${watchLastName || ''}_${uuidv4().substring(0, 8)}`.toLowerCase();
-      setGeneratedUsername(newUsername);
-    } else {
-      setGeneratedUsername("");
-    }
-  }, [watchFirstName, watchLastName]);
-
   const playSound = (soundFile) => {
     const audio = new Audio(soundFile);
     audio.play();
   };
   const base_api_url = import.meta.env.VITE_API_BASE_URL;
-
-  const checkUserIdExists = async (userId) => {
-    const token = localStorage.getItem("authToken");
-    if (!token) return false;
-
-    try {
-      setUserIdChecking(true);
-      const response = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-user/check-userid?userId=${encodeURIComponent(userId)}`, {
-        method: "GET",
-        headers: {
-          accept: "*/*",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to check user ID");
-      }
-
-      const result = await response.json();
-      return result.exists;
-    } catch (error) {
-      console.error("Error checking user ID:", error);
-      return false;
-    } finally {
-      setUserIdChecking(false);
-    }
-  };
 
   const fetchUsers = async () => {
     const token = localStorage.getItem("authToken");
@@ -114,11 +65,10 @@ const VerifierUser = () => {
       });
 
       const result = await response.json();
-      console.log("Fetched users:", result);
-      if (!response.ok) {
-        //const errorText = await response.text();
-        const errorText = result.error || "Failed to fetch users";
-        throw new Error(`Failed to fetch users: ${errorText}`);
+       if (!response.ok) {
+        const errorText = await response.text();
+
+        throw new Error(`Failed to fetch users11: ${errorText}`);
       }
 
       if (result.data && Array.isArray(result.data) && result.data.length > 1) {
@@ -141,7 +91,7 @@ const VerifierUser = () => {
       toast.error("You are not authenticated");
       return;
     }
-    
+    //Logic to pass pageSize as query parameter pending
     try {
       const response = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`, {
         method: "GET",
@@ -184,17 +134,13 @@ const VerifierUser = () => {
       const nameParts = user.username.split(" ");
       const first_name = nameParts[0] || "";
       const last_name = nameParts.slice(1).join(" ") || "";
-      
-      const roleValue = user.verifierRole ? `${user.verifierRole.id}:${user.verifierRole.role}` : "";
-      
       const formValues = {
         first_name,
         last_name,
-        user_id: user.userId || "",
         email: user.email,
         foundationID: user.foundationID,
-        role: roleValue,
-        status: user.statusId === 1 ? "CREATED" : user.statusId === 2 ? "INVITED" : user.statusId === 3 ? "ACTIVE" : user.statusId === 4 ? "SUSPENDED" : "REVOKED",
+        role: user.verifierRole?.role || "",
+        status: user.statusId === 1 ? "ACTIVE" : user.statusId === 2 ? "SUSPENDED" : "REVOKED",
       };
       reset(formValues);
       setIsEditing(true);
@@ -203,7 +149,6 @@ const VerifierUser = () => {
       reset({
         first_name: "",
         last_name: "",
-        user_id: "",
         email: "",
         foundationID: "",
         role: "",
@@ -211,11 +156,9 @@ const VerifierUser = () => {
       });
       setIsEditing(false);
       setEditingUserId(null);
-      setGeneratedUsername("");
     }
     setIsModalOpen(true);
     setErrorRoles(null);
-    setUserIdExists(false);
   };
 
   const closeModal = () => {
@@ -223,7 +166,6 @@ const VerifierUser = () => {
     reset({
       first_name: "",
       last_name: "",
-      user_id: "",
       email: "",
       foundationID: "",
       role: "",
@@ -231,8 +173,6 @@ const VerifierUser = () => {
     });
     setIsEditing(false);
     setEditingUserId(null);
-    setUserIdExists(false);
-    setGeneratedUsername("");
   };
 
   const onSubmit = async (data) => {
@@ -242,11 +182,9 @@ const VerifierUser = () => {
       return;
     }
 
-    const username = data.user_id 
-      ? data.user_id 
-      : `${data.first_name}_${data.last_name}_${uuidv4().substring(0, 8)}`.toLowerCase();
+    const username = `${data.first_name} ${data.last_name}`.trim();
 
-    if (!data.first_name || !data.last_name || !data.foundationID || !data.role || !data.email) {
+    if (!username || !data.foundationID || !data.role || !data.email) {
       playSound("/sounds/failure.mp3");
       toast.error("All fields are required!");
       return;
@@ -258,23 +196,11 @@ const VerifierUser = () => {
       return;
     }
 
-    const [roleId, roleName] = data.role.split(":");
-    const selectedRole = roles.find((role) => role.id === parseInt(roleId));
-
+    const selectedRole = roles.find((role) => role.role === data.role);
     if (!selectedRole) {
       playSound("/sounds/failure.mp3");
       toast.error("Invalid role selected");
       return;
-    }
-
-    if (data.user_id && !isEditing) {
-      const exists = await checkUserIdExists(data.user_id);
-      if (exists) {
-        setUserIdExists(true);
-        playSound("/sounds/failure.mp3");
-        toast.error("User ID already exists. Please choose a different one.");
-        return;
-      }
     }
 
     const payload = {
@@ -315,7 +241,8 @@ const VerifierUser = () => {
         });
 
         if (!createResponse.ok) {
-          throw new Error("Failed to create user");
+          //const errorText =  await createResponse.text();
+          throw new Error(`Failed to create user`);
         }
 
         const result = await createResponse.json();
@@ -326,18 +253,8 @@ const VerifierUser = () => {
       closeModal();
       fetchUsers();
     } catch (error) {
-      playSound("/sounds/failure.mp3");
+        playSound("/sounds/failure.mp3");
       toast.error(`${error.message}`);
-    }
-  };
-
-  const handleUserIdChange = async (e) => {
-    const userId = e.target.value;
-    if (userId && userId.length > 3) {
-      const exists = await checkUserIdExists(userId);
-      setUserIdExists(exists);
-    } else {
-      setUserIdExists(false);
     }
   };
 
@@ -393,8 +310,6 @@ const VerifierUser = () => {
       return;
     }
 
-    setIsSendingInvitation(true);
-
     try {
       const response = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-user/invite`, {
         method: "POST",
@@ -414,14 +329,11 @@ const VerifierUser = () => {
 
       playSound("/sounds/success.mp3");
       toast.success("Invitation email sent successfully!");
-      
-      // Close modal after successful send
-      setConfirmSendInvitation({ open: false, user: null });
     } catch (error) {
       playSound("/sounds/failure.mp3");
       toast.error(`${error.message}`);
     } finally {
-      setIsSendingInvitation(false);
+      setConfirmSendInvitation({ open: false, user: null });
       fetchUsers();
     }
   };
@@ -452,8 +364,8 @@ const VerifierUser = () => {
 
     try {
       const response = await fetch(
-        `${base_api_url}/mobile-verifier/v1/verifier-user/revoke_suspend?id=${
-          encodeURIComponent(selectedUserForStatus.id)}&status=${encodeURIComponent(selectedStatus)}`,
+        `${base_api_url}/mobile-verifier/v1/verifier-user/revoke_suspend?id=
+        ${encodeURIComponent(selectedUserForStatus.id)}&status=${encodeURIComponent(selectedStatus)}`,
         {
           method: "POST",
           headers: {
@@ -479,11 +391,11 @@ const VerifierUser = () => {
 
   const columns = [
     {
-      header: "Foundation ID",
-      accessorKey: "foundationID",
+      header: "User ID",
+      accessorKey: "id",
     },
     {
-      header: "Username",
+      header: "User Name",
       accessorKey: "username",
     },
     {
@@ -493,6 +405,10 @@ const VerifierUser = () => {
     {
       header: "Role",
       accessorKey: "verifierRole.role",
+    },
+    {
+      header: "Role ID",
+      accessorKey: "verifierRole.id",
     },
     {
       header: "Status",
@@ -529,7 +445,7 @@ const VerifierUser = () => {
         const statusId = row.original.statusId;
         return (
           <>
-            {statusId <= 3 && (
+            {statusId <= 2 && (
               <button
                 className="text-emerald-400 border border-emerald-400 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-emerald-50 transition-colors"
                 onClick={() => openConfirmationModal(row.original)}
@@ -537,7 +453,7 @@ const VerifierUser = () => {
                 Re-Invite
               </button>
             )}
-            {statusId >= 4 && (
+            {statusId >= 3 && (
               <span className="text-blue-500 tex-bold">-</span>
             )}
           </>
@@ -558,6 +474,12 @@ const VerifierUser = () => {
           >
             Update Status
           </button> )}
+          {/*<button
+            className="text-red-500 border border-red-500 px-1 py-1 rounded text-xs md:text-sm font-medium hover:bg-red-50 transition-colors"
+            onClick={() => openDeleteModal(row.original)}
+          >
+            Delete
+          </button> */}
         </div>
     )}
     },
@@ -566,6 +488,7 @@ const VerifierUser = () => {
   return (
     <div className="flex-1 mt-4 overflow-x-auto">
       <ToastContainer />
+      {/* Updated Search and Add User Section */}
       <div className="flex flex-col md:flex-row gap-4 mb-3">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-500 mb-1">Search Users</label>
@@ -646,41 +569,6 @@ const VerifierUser = () => {
               </div>
 
               <div className="mb-4">
-                <label htmlFor="user_id" className="block text-sm font-medium text-gray-500 mb-2">
-                  User ID (Optional)
-                </label>
-                <input
-                  id="user_id"
-                  type="text"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 transition duration-200"
-                  {...register("user_id")}
-                  onChange={handleUserIdChange}
-                />
-                {userIdExists && (
-                  <p className="text-red-500 text-sm">User ID already exists. Please choose a different one.</p>
-                )}
-                {!isEditing && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    <span>Name Suggestion: </span>
-                    {generatedUsername ? (
-                      <button
-                        type="button"
-                        className="text-emerald-600 hover:underline cursor-pointer bg-transparent border-none p-0"
-                        onClick={() => {
-                          setValue('user_id', generatedUsername);
-                          handleUserIdChange({ target: { value: generatedUsername } });
-                        }}
-                      >
-                        {generatedUsername}
-                      </button>
-                    ) : (
-                      <span>Unique Identifier</span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="mb-4">
                 <label htmlFor="foundationID" className="block text-sm font-medium text-gray-500 mb-2">
                   Foundation ID
                 </label>
@@ -731,12 +619,8 @@ const VerifierUser = () => {
                     >
                       <option value="" className="text-gray-500">Select Role</option>
                       {roles.map((role) => (
-                        <option 
-                          className="text-gray-500" 
-                          key={role.id} 
-                          value={`${role.id}:${role.role}`}
-                        >
-                          {role.id}: {role.role}
+                        <option className="text-gray-500" key={role.id} value={role.role}>
+                          {role.role}
                         </option>
                       ))}
                     </select>
@@ -756,7 +640,7 @@ const VerifierUser = () => {
                 <button
                   type="submit"
                   className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors"
-                  disabled={loadingRoles || errorRoles || userIdChecking || userIdExists}
+                  disabled={loadingRoles || errorRoles}
                 >
                   {isEditing ? "Update User" : "Create User"}
                 </button>
@@ -802,40 +686,14 @@ const VerifierUser = () => {
               <button
                 className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
                 onClick={() => setConfirmSendInvitation({ open: false, user: null })}
-                disabled={isSendingInvitation}
               >
                 Cancel
               </button>
               <button
-                className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed min-w-[120px]"
+                className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors"
                 onClick={handleSendInvitation}
-                disabled={isSendingInvitation}
               >
-                {isSendingInvitation ? (
-                  <>
-                    <svg 
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      fill="none" 
-                      viewBox="0 0 24 24"
-                    >
-                      <circle 
-                        className="opacity-25" 
-                        cx="12" 
-                        cy="12" 
-                        r="10" 
-                        stroke="currentColor" 
-                        strokeWidth="4"
-                      ></circle>
-                      <path 
-                        className="opacity-75" 
-                        fill="currentColor" 
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Sending...
-                  </>
-                ) : "Send Invitation"}
+                Send Invitation
               </button>
             </div>
           </div>

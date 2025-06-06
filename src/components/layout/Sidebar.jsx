@@ -7,7 +7,9 @@ import {
   FaUsers,
   FaUserCheck,
   FaFileAlt,
+  FaFileUpload
 } from 'react-icons/fa';
+
 import { RiOrganizationChart } from 'react-icons/ri';
 import { useAuth } from '../../context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -35,17 +37,18 @@ const Sidebar = ({ onToggle }) => {
   return (
     <div className="relative">
       <div
-        className={`${shouldExpand ? 'w-64' : isCollapsed ? 'w-16' : 'w-64'} h-full bg-gradient-to-b from-white-50 to-white-100 border-r border-gray-200 flex flex-col transition-all duration-400 ease-in-out overflow-hidden font-sans`}
+        className={`${shouldExpand ? 'w-60' : isCollapsed ? 'w-16' : 'w-60'} h-full bg-gradient-to-b from-white-50 to-white-100 border-r border-gray-200 flex flex-col transition-all duration-400 ease-in-out overflow-hidden font-sans`}
       >
         {/* Collapse Button */}
         <button
-          className="absolute -right-4 top-7 bg-white p-2 rounded-full shadow-lg hover:bg-emerald-50 hover:shadow-xl transition-all duration-200 group"
+          className="absolute -right-4 top-6 bg-white p-2 rounded-full shadow-lg hover:bg-emerald-50 hover:shadow-xl transition-all duration-200 group"
           onClick={toggleSidebar}
         >
+
           {isCollapsed ? (
-            <FaChevronRight size={15} className="text-emerald-500 group-hover:text-emerald-600" />
+            <FaChevronRight size={16} className="text-emerald-500 text-lg group-hover:text-emerald-600" />
           ) : (
-            <FaChevronLeft size={20} className="text-emerald-500 group-hover:text-emerald-600" />
+            <FaChevronLeft size={20} className="text-emerald-500 text-lg group-hover:text-emerald-600" />
           )}
         </button>
 
@@ -112,6 +115,7 @@ const Sidebar = ({ onToggle }) => {
                 </>
               )} 
               {role === 'admin' && (
+                <>
                 <NavItem
                   icon={<RiOrganizationChart className="text-emerald-500 group-hover:text-emerald-600" />}
                   label="Create Organization"
@@ -119,7 +123,16 @@ const Sidebar = ({ onToggle }) => {
                   active={location.pathname === '/dashboard/create-organization'}
                   isCollapsed={isCollapsed}
                   shouldShowLabel={shouldExpand}
-                />
+                /> 
+              <NavItem
+                icon={<FaFileUpload className="text-emerald-500 group-hover:text-emerald-600" />}
+                label="Upload Schema File"
+                path="/dashboard/schema-upload"
+                active={location.pathname === '/dashboard/schema-upload'}
+                isCollapsed={isCollapsed}
+                shouldShowLabel={shouldExpand}
+              />
+              </>
               )}
               <NavItem
                 icon={<FaQuestion className="text-emerald-500 group-hover:text-emerald-600" />}
@@ -129,6 +142,7 @@ const Sidebar = ({ onToggle }) => {
                 isCollapsed={isCollapsed}
                 shouldShowLabel={shouldExpand}
               />
+             
             </ul>
           </nav>
         </div>
@@ -143,7 +157,7 @@ const Sidebar = ({ onToggle }) => {
             onClick={logout}
             className="flex items-center w-full text-emerald-100 hover:text-emerald-600 font-medium group transition-colors duration-200"
           >
-            <div className="py-1 px-2 rounded-md group-hover:bg-emerald-50 transition-colors duration-200">
+            <div className="py-1 pl-4 rounded-md group-hover:bg-emerald-50 transition-colors duration-200">
               <FaSignOutAlt className="w-5 h-5 text-emerald-400 group-hover:text-emerald-600" />
             </div>
             {(!isCollapsed || shouldExpand) && (

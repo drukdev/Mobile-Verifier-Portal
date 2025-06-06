@@ -6,9 +6,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import TableComponent from "../components/layout/TableComponent";
 import MainModal from "../components/client/MainModal";
-import SchemaModal from "../components/client/SchemaModal";
+import AddSchemaModal from "../components/client/AddSchemaModal";
+
 const ProofTemplate = () => {
-  // State variables
   const [isMainModalOpen, setIsMainModalOpen] = useState(false);
   const [isSchemaModalOpen, setIsSchemaModalOpen] = useState(false);
   const [schemas, setSchemas] = useState([]);
@@ -16,130 +16,66 @@ const ProofTemplate = () => {
   const [editingTemplateIndex, setEditingTemplateIndex] = useState(null);
   const [roles, setRoles] = useState([]);
   const [globalFilter, setGlobalFilter] = useState("");
-  const [orgId, setOrgId] = useState("");
-  const [organizationRoles, setOrganizationRoles] = useState([]);
-  const [selectedOrgRole, setSelectedOrgRole] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingRoles, setLoadingRoles] = useState(true);
-  const [loadingOrganizationRoles, setLoadingOrganizationRoles] = useState(true);
 
-  // Schema state variables
-  const [schemaName, setSchemaName] = useState("");
-  const [schemaUrl, setSchemaUrl] = useState("");
-  const [schemaFields, setSchemaFields] = useState([]);
-
-  // Auth and navigation
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // React Hook Form setup
   const {
     register,
     handleSubmit,
     reset,
-    control,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
       template_name: "",
       template_id: "",
       role: [],
-      version: "",
+      version: "1.0.0",
       description: "",
-      schemas: [],
     },
   });
 
-  // Function to play sound
-  const playSound = (soundFile) => {
-    const audio = new Audio(soundFile);
-    audio.play();
-  };
+  const templateName = watch("template_name");
+
+  useEffect(() => {
+    if (templateName) {
+      const firstLetter = templateName.charAt(0).toUpperCase();
+      const uuid = crypto.randomUUID().split('-')[0]; // Get first part of UUID
+      const suggestedId = `${firstLetter}${uuid}`;
+      setValue("template_id", suggestedId);
+    }
+  }, [templateName, setValue]);
+
   const base_api_url = import.meta.env.VITE_API_BASE_URL;
 
-  // Fetch organization roles
-  const fetchOrganizationRoles = async () => {
-    setLoadingOrganizationRoles(true);
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      toast.error("You are not authenticated");
-      setLoadingOrganizationRoles(false);
-      return;
-    }
-
-    try {
-      const url = `${base_api_url}/mobile-verifier/v1/verifier-role`;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          accept: "*/*",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch roles: ${errorText}`);
-      }
-
-      const result = await response.json();
-
-      if (result.data && Array.isArray(result.data) && result.data.length > 1) {
-        const roles = result.data[1];
-        setOrganizationRoles(roles);
-      } else {
-        console.error("Invalid data format:", result);
-        toast.error("Invalid data format received from the server");
-      }
-    } catch (error) {
-      console.error("Error fetching organization roles:", error);
-      playSound("/sounds/failure.mp3");
-      toast.error("Failed to fetch organization roles");
-    } finally {
-      setLoadingOrganizationRoles(false);
-    }
-  };
-
-  // Fetch templates and roles from the backend
   const fetchTemplates = async () => {
     setLoading(true);
     const token = localStorage.getItem("authToken");
 
-    if (!token) {
-      console.error("No token found");
-      toast.error("You are not authenticated");
-      setLoading(false);
-      return;
-    }
-
     try {
-      const url = `${base_api_url}/mobile-verifier/v1/proof-template?pageSize=300`;
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          accept: "*/*",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${base_api_url}/mobile-verifier/v1/proof-template?pageSize=300`,
+        {
+          method: "GET",
+          headers: {
+            accept: "*/*",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error response:", errorText);
-        throw new Error(`Failed to fetch templates: ${errorText}`);
+        throw new Error("Failed to fetch templates");
       }
 
       const result = await response.json();
-
-      if (result.data && Array.isArray(result.data)) {
-        setTemplates(result.data[1]);
-      } else {
-        console.error("Invalid data format:", result);
-        toast.error("Invalid data format received from the server");
-      }
+      setTemplates(result.data?.[1] || []);
     } catch (error) {
-      console.error("Error fetching templates:", error);
-      playSound("/sounds/failure.mp3");
-      toast.error("Failed to fetch templates");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -149,42 +85,26 @@ const ProofTemplate = () => {
     setLoadingRoles(true);
     const token = localStorage.getItem("authToken");
 
-    if (!token) {
-      console.error("No token found");
-      toast.error("You are not authenticated");
-      setLoadingRoles(false);
-      return;
-    }
-
     try {
-      const url = `${base_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`;
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          accept: "*/*",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${base_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`,
+        {
+          method: "GET",
+          headers: {
+            accept: "*/*",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error response:", errorText);
-        throw new Error(`Failed to fetch roles: ${errorText}`);
+        throw new Error("Failed to fetch roles");
       }
 
       const result = await response.json();
-      if (result.data && Array.isArray(result.data) && result.data.length > 1) {
-        const roles = result.data[1];
-        setRoles(roles);
-      } else {
-        console.error("Invalid data format:", result);
-        toast.error("Invalid data format received from the server");
-      }
+      setRoles(result.data?.[1] || []);
     } catch (error) {
-      console.error("Error fetching roles:", error);
-      playSound("/sounds/failure.mp3");
-      toast.error("Failed to fetch roles");
+      toast.error(error.message);
     } finally {
       setLoadingRoles(false);
     }
@@ -194,11 +114,9 @@ const ProofTemplate = () => {
     if (isAuthenticated) {
       fetchTemplates();
       fetchRoles();
-      fetchOrganizationRoles();
     }
   }, [isAuthenticated]);
 
-  // Open main modal for adding or editing a template
   const openMainModal = (index = null) => {
     if (index !== null) {
       const template = templates[index];
@@ -209,14 +127,33 @@ const ProofTemplate = () => {
         version: template.version,
         description: template.description,
       });
-      setSchemas(JSON.parse(template.payload).data);
+      
+      try {
+        const payload = JSON.parse(template.payload);
+        // Transform the payload data back to our schema structure
+        const transformedSchemas = payload.data.map(schema => ({
+          name: schema.schemaName,
+          schemas: [{
+            schemaId: schema.schema,
+            schemaName: schema.schemaName,
+            version: "1.0.0", // Default version as it's not in payload
+            attributes: [], // Not in payload
+            attributeNames: schema.names
+          }]
+        }));
+        setSchemas(transformedSchemas);
+      } catch (e) {
+        console.error("Error parsing template payload:", e);
+        setSchemas([]);
+      }
+      
       setEditingTemplateIndex(index);
     } else {
       reset({
         template_name: "",
         template_id: "",
         role: [],
-        version: "",
+        version: "1.0.0",
         description: "",
       });
       setSchemas([]);
@@ -225,102 +162,56 @@ const ProofTemplate = () => {
     setIsMainModalOpen(true);
   };
 
-  // Close main modal
   const closeMainModal = () => {
     setIsMainModalOpen(false);
-    reset({
-      template_name: "",
-      template_id: "",
-      role: [],
-      version: "",
-      description: "",
-    });
-    setSchemas([]);
-    setEditingTemplateIndex(null);
   };
 
-  // Open nested schema modal
-  const openSchemaModal = (index = null) => {
-    setSchemaName("");
-    setSchemaUrl("");
-    setSchemaFields([]);
+  const openSchemaModal = () => {
     setIsSchemaModalOpen(true);
   };
 
-  // Close nested schema modal
   const closeSchemaModal = () => {
     setIsSchemaModalOpen(false);
   };
 
-  // Add a new schema field
-  const addSchemaField = () => {
-    setSchemaFields([...schemaFields, { field: "" }]);
+  const saveSchema = (schemaData) => {
+    setSchemas([...schemas, schemaData]);
   };
 
-  // Save schema row
-  const saveSchemaRow = () => {
-    if (!schemaName || !schemaUrl) {
-      alert("Please enter Schema Name and Schema URL.");
-      return;
-    }
-
-    const newSchemaRow = {
-      schemaName: schemaName,
-      schema: schemaUrl,
-      names: schemaFields.map((field) => field.field),
-    };
-
-    setSchemas([...schemas, newSchemaRow]);
-    closeSchemaModal();
-  };
-
-  // Remove a schema row
   const deleteSchemaRow = (index) => {
     setSchemas(schemas.filter((_, i) => i !== index));
   };
 
-  // Handle form submission for saving the proof template
   const onSubmit = async (data) => {
     const token = localStorage.getItem("authToken");
 
-    if (!token) {
-      toast.error("You are not authenticated");
-      return;
-    }
-
-    const semVerRegex = /^\d+\.\d+\.\d+$/;
-    if (!semVerRegex.test(data.version)) {
-      toast.error("Version must follow the Semantic Versioning format (e.g., 1.0.0)");
-      return;
-    }
-
-    const verifierRoleIds = data.role.map((roleId) => Number(roleId));
-    if (verifierRoleIds.length === 0) {
-      toast.error("At least one role must be selected");
-      return;
-    }
-
-    const payload = {
-      templateId: data.template_id,
-      name: data.template_name,
-      description: data.description,
-      version: data.version,
-      payload: {
-        type: "dif",
-        data: schemas.map((schema) => ({
-          schemaName: schema.schemaName,
-          names: schema.names,
-          schema: schema.schema,
-        })),
-      },
-      verifierRoleIds: verifierRoleIds,
-    };
-
-    const url = editingTemplateIndex !== null
-      ? `${base_api_url}/mobile-verifier/v1/proof-templates/${templates[editingTemplateIndex].id}`
-      : `${base_api_url}/mobile-verifier/v1/proof-template`;
-    const method = editingTemplateIndex !== null ? "PATCH" : "POST";
     try {
+      // Transform schemas into the required format
+      const payloadData = schemas.flatMap(schemaGroup => 
+        schemaGroup.schemas.map(schema => ({
+          schemaName: schema.schemaName,
+          names: schema.attributeNames,
+          schema: schema.schemaId
+        }))
+      );
+
+      const payload = {
+        templateId: data.template_id,
+        name: data.template_name,
+        description: data.description,
+        version: data.version,
+        payload: {
+          type: "dif",
+          data: payloadData
+        },
+        verifierRoleIds: data.role.map(Number),
+      };
+      console.log("Payload to be sent:", payload);
+      const url = editingTemplateIndex !== null
+        ? `${base_api_url}/mobile-verifier/v1/proof-templates/${templates[editingTemplateIndex].id}`
+        : `${base_api_url}/mobile-verifier/v1/proof-template`;
+      const method = editingTemplateIndex !== null ? "PATCH" : "POST";
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -332,41 +223,18 @@ const ProofTemplate = () => {
       });
 
       if (!response.ok) {
-        const errorText = await response.json();
-        throw new Error(`Failed to ${editingTemplateIndex !== null ? "update" : "add"} template: ${errorText.message}`);
+        throw new Error("Failed to save template");
       }
 
       const result = await response.json();
-
-      if (editingTemplateIndex !== null) {
-        const updatedTemplates = [...templates];
-        updatedTemplates[editingTemplateIndex] = result.data.proofTemplate;
-        setTemplates(updatedTemplates);
-        playSound("/sounds/success.mp3");
-        toast.success(result.message || "Template updated successfully");
-        setIsMainModalOpen(false);
-        reset();
-        setTimeout(() => {
-          navigate("/dashboard/proof-templates");
-        }, 2000);
-      } else {
-        setTemplates((prevTemplates) => [...prevTemplates, result.data.proofTemplate]);
-        playSound("/sounds/success.mp3");
-        toast.success(result.message || "Template created successfully");
-        setIsMainModalOpen(false);
-        reset();
-        setTimeout(() => {
-          navigate("/dashboard/proof-templates");
-        }, 2000);
-      }
+      toast.success(result.message || "Template saved successfully");
+      await fetchTemplates();
+      setIsMainModalOpen(false);
     } catch (error) {
-      console.error(`Error ${editingTemplateIndex !== null ? "updating" : "adding"} template:`, error);
-      playSound("/sounds/failure.mp3");
-      toast.error(`${error.message}`);
+      toast.error(error.message);
     }
   };
 
-  // Columns for the table
   const columns = [
     { accessorKey: "templateId", header: "Template ID", cell: (info) => info.getValue(), enableSorting: true },
     { accessorKey: "name", header: "Template Name", cell: (info) => info.getValue(), enableSorting: true },
@@ -376,19 +244,8 @@ const ProofTemplate = () => {
 
   return (
     <div className="flex-1 mt-4 overflow-x-auto">
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+      <ToastContainer position="top-right" autoClose={3000} />
 
-      {/* Search and Add Template Section */}
       <div className="flex flex-col md:flex-row gap-4 mb-3">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-500 mb-1">Search Templates</label>
@@ -408,18 +265,13 @@ const ProofTemplate = () => {
         <div className="flex items-end">
           <button
             className="bg-emerald-400 text-white px-6 py-1 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors h-[42px]"
-            onClick={() => {
-              setIsMainModalOpen(true);
-              setEditingTemplateIndex(null);
-              reset();
-            }}
+            onClick={() => openMainModal()}
           >
             Add New Template
           </button>
         </div>
       </div>
 
-      {/* Table Component */}
       {loading ? (
         <p className="text-center pt-8 text-gray-500">Loading templates...</p>
       ) : templates.length === 0 ? (
@@ -430,10 +282,10 @@ const ProofTemplate = () => {
           data={templates}
           globalFilter={globalFilter}
           setGlobalFilter={setGlobalFilter}
+          onRowClick={(row) => openMainModal(row.index)}
         />
       )}
 
-      {/* Modal for Adding/Editing Template */}
       {isMainModalOpen && (
         <MainModal
           isOpen={isMainModalOpen}
@@ -441,7 +293,6 @@ const ProofTemplate = () => {
           onSubmit={onSubmit}
           register={register}
           handleSubmit={handleSubmit}
-          control={control}
           errors={errors}
           schemas={schemas}
           openSchemaModal={openSchemaModal}
@@ -451,19 +302,12 @@ const ProofTemplate = () => {
         />
       )}
 
-      {/* Schema Modal */}
       {isSchemaModalOpen && (
-        <SchemaModal
+        <AddSchemaModal
           isOpen={isSchemaModalOpen}
           onClose={closeSchemaModal}
-          schemaName={schemaName}
-          setSchemaName={setSchemaName}
-          schemaUrl={schemaUrl}
-          setSchemaUrl={setSchemaUrl}
-          schemaFields={schemaFields}
-          setSchemaFields={setSchemaFields}
-          saveSchemaRow={saveSchemaRow}
-          addSchemaField={addSchemaField}
+          saveSchema={saveSchema}
+          existingSchemas={schemas}
         />
       )}
     </div>

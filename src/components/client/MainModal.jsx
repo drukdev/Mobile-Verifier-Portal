@@ -50,9 +50,9 @@ const MainModal = ({
 
   return (
     <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl max-h-[90vh] overflow-y-auto">
         <h3 className="text-xl font-semibold mb-4 text-gray-500">Add/Edit Proof Template</h3>
-        <form onSubmit={ handleSubmit(handleFormSubmit)}>
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
           <div className="grid grid-cols-2 gap-4 mb-4 text-gray-500">
             <div>
               <label htmlFor="templateName" className="block text-sm font-medium text-gray-500 mb-2">
@@ -172,46 +172,56 @@ const MainModal = ({
 
           <div className="mb-4">
             <h4 className="text-lg font-semibold mb-2">Schemas</h4>
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border p-2">Schema Name</th>
-                  <th className="border p-2">Schema URL</th>
-                  <th className="border p-2">Attributes</th>
-                  <th className="border p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {schemas.map((schema, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="border p-2">{schema.schemaName}</td>
-                    <td className="border p-2">{schema.schema}</td>
-                    <td className="border p-2 text-xs">
-                      {schema.names.map((field, idx) => (
-                        <div key={idx}>{field}</div>
-                      ))}
-                    </td>
-                    <td className="border p-2 text-center">
-                      <button
-                        className="text-red-500 border border-red-500 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-red-50 transition-colors"
-                        onClick={() => deleteSchemaRow(index)}
-                      >
-                        Remove
-                      </button>
-                    </td>
+            <div className="overflow-hidden rounded-lg border border-gray-300">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-gray-200">
+                    <th className="border p-2">Schema Name</th>
+                    <th className="border p-2">Schema ID</th>
+                    <th className="border p-2">Version</th>
+                    <th className="border p-2">Attributes</th>
+                    <th className="border p-2">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {schemas.map((schemaGroup, groupIndex) => (
+                    schemaGroup.schemas.map((schema, schemaIndex) => (
+                      <tr key={`${groupIndex}-${schemaIndex}`} className="border-b">
+                        <td className="border p-2">{schema.schemaName}</td>
+                        <td className="border p-2 text-sm font-mono">{schema.schemaId}</td>
+                        <td className="border p-2">{schema.version}</td>
+                        <td className="border p-2">
+                          <div className="flex flex-wrap gap-1">
+                            {schema.attributeNames.map((attr, idx) => (
+                              <span key={idx} className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                                {attr}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="border p-2 text-center">
+                          <button
+                            className="text-red-500 border border-red-500 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-red-50 transition-colors"
+                            onClick={() => deleteSchemaRow(groupIndex)}
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <button
-              className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-xs font-bold mt-4 text-gray-500 hover:bg-emerald-600 transition-colors"
-              onClick={(e) => { e.preventDefault(); openSchemaModal()}}
+              className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-bold mt-4 hover:bg-emerald-600 transition-colors"
+              onClick={(e) => { e.preventDefault(); openSchemaModal(); }}
             >
               Add Schema
             </button>
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
             <button
               className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
               onClick={onClose}

@@ -23,7 +23,7 @@ const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
     getSortedRowModel: getSortedRowModel(),
     initialState: {
       pagination: {
-        pageSize: 10,
+        pageSize: 5,
       },
     },
   });
@@ -134,7 +134,7 @@ const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
             }}
             className="px-2 py-1 border border-emerald-400 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
           >
-            {[10, 20, 30, 40, 50].map((pageSize) => (
+            {[5, 10, 20, 30, 40, 50].map((pageSize) => (
               <option key={pageSize} value={pageSize}>
                 Show {pageSize}
               </option>
