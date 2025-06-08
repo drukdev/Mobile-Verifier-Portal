@@ -242,7 +242,7 @@ const FileUploadPage = () => {
               />
               <div className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:border-emerald-500 transition duration-200 flex justify-between items-center">
                 <span className="text-gray-500">
-                  {attachedFile ? attachedFile.name : "Choose a file..."}
+                  {attachedFile ? attachedFile.name : "Choose a schema file (.csv) to upload..."}
                 </span>
                 <span className="text-gray-400">📁</span>
               </div>

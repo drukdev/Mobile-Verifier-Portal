@@ -72,7 +72,13 @@ const VerifierRole = () => {
       }
 
       const result = await response.json();
-
+      console.log((`this is the result`, result.statusCode));
+      if (result.statusCode === 404) {
+        playSound("/sounds/failure.mp3");
+        toast.error("No roles found");
+        setRoles([]);
+        return;
+      }
       if (result.data && Array.isArray(result.data) && result.data.length > 1) {
         const roles = result.data[1];
         setRoles(roles);
