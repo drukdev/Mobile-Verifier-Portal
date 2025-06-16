@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { Phone } from "lucide-react";
 
 const FaqsCard = (props) => {
   const answerElRef = useRef();
@@ -58,7 +59,7 @@ const FaqsCard = (props) => {
         className="duration-300 overflow-y-auto max-h-64"
         style={isActive ? { height: answerH } : { height: "0px" }}
       >
-        <div className="px-0 pb-6"> {/* Reduced side padding and added bottom padding */}
+        <div className="px-0 pb-6">
           <p className="text-gray-600">{faqsList.a}</p>
         </div>
       </div>
@@ -116,8 +117,12 @@ export default () => {
         </h3>
         <p className="text-gray-600 max-w-lg mx-auto text-sm">
           Answered all frequently asked questions, Still confused? feel free to
-          contact us 1109.
+          contact us
         </p>
+        <div className="flex items-center justify-center gap-2 text-emerald-600 font-medium">
+          <Phone className="h-4 w-4" />
+          <span>1109</span>
+        </div>
       </div>
       <div className="mt-10 w-full">
         {faqsList.map((item, idx) => (

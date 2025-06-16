@@ -1,26 +1,21 @@
-# Stage 1: Build the application
-FROM node:20-alpine AS builder
+# Development Dockerfile
+FROM node:18-alpine
 
-# Ensure npm is available (though it should be included)
-RUN apk add --no-cache npm
-
+# Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json ./
+# Install dependencies for development
+COPY package*.json ./
+RUN npm install
 
-# Install dependencies
-RUN npm install --silent
-
-# Copy the rest of the application
+# Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Expose development port
+EXPOSE 5173
 
-# Stage 2: Serve the application
-FROM nginx:1.25-alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Set environment to development
+ENV NODE_ENV=development
+
+# Start development server with hot reload
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

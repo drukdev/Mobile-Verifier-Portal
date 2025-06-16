@@ -53,12 +53,6 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
     return allAttributes;
   };
 
-  // Check if any of the selected attributes already exist in the template
-  const hasDuplicateAttributes = (attributes) => {
-    const existingAttributes = getAllExistingAttributeNames();
-    return attributes.some(attr => existingAttributes.includes(attr));
-  };
-
   // Fetch autocomplete results
   const fetchAutoCompleteResults = async (query) => {
     setIsLoading(true);
@@ -139,7 +133,7 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
     }
   };
 
-  // Handle attribute selection - modified for multiple selections
+  // Handle attribute selection
   const handleAttributeSelect = (schemaId, attribute) => {
     setSelectedAttributes(prev => {
       const currentAttributes = prev[schemaId] || [];
@@ -169,15 +163,22 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
 
   // Handle card click - add to main model
   const handleCardClick = (item) => {
-    const selectedAttrs = selectedAttributes[item.schemaId];
-    if (!selectedAttrs || selectedAttrs.length === 0) {
+    const selectedAttrs = selectedAttributes[item.schemaId] || [];
+    if (selectedAttrs.length === 0) {
       toast.warning("Please select at least one attribute");
       return;
     }
 
-    // Check for duplicate attributes
-    if (hasDuplicateAttributes(selectedAttrs)) {
-      toast.warning("One or more selected attributes already exist in the template");
+    // Check if any selected attributes already exist
+    const existingAttributes = getAllExistingAttributeNames();
+    const duplicateAttributes = selectedAttrs.filter(attr => 
+      existingAttributes.includes(attr)
+    );
+    
+    if (duplicateAttributes.length > 0) {
+      toast.warning(
+        `The following attributes already exist: ${duplicateAttributes.join(", ")}`
+      );
       return;
     }
 
@@ -198,7 +199,7 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
     };
 
     saveSchema(schemaData);
-    toast.success(`Added ${selectedAttrs.length} unique attribute(s) to ${item.schemaName}`);
+    toast.success(`Added ${selectedAttrs.length} attribute(s) from ${item.schemaName}`);
     
     // Clear selection for this schema
     setSelectedAttributes(prev => {
@@ -211,163 +212,211 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-3xl max-h-[90vh] overflow-y-auto relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
-        <h3 className="text-xl font-semibold mb-4 text-gray-500">Search and Add Schemas</h3>
-        
-        <div className="mb-4 relative">
-          <label className="block text-sm font-medium text-gray-500 mb-2">
-            Search Schemas
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Type to search schemas..."
-              className="w-full px-4 py-2 pl-10 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 transition duration-200"
-            />
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              🔍
-            </span>
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="bg-emerald-600 px-6 py-3 text-white">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Add Schemas</h3>
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          
-          {showDropdown && searchResults.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-              {searchResults.map((item, index) => (
-                <div
-                  key={index}
-                  className={`p-2 hover:bg-gray-100 cursor-pointer ${selectedSchema === item ? 'bg-gray-100' : ''}`}
-                  onClick={() => {
-                    setSelectedSchema(item);
-                    fetchSchemaDetails(item);
-                  }}
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
-        {schemaDetails.length > 0 && (
-          <div className="mt-6">
-            <h4 className="text-sm font-medium text-gray-500 mb-3">
-              Found {schemaDetails.length} schema(s) matching your search
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {schemaDetails.map((item, index) => {
-                const currentSelectedAttrs = selectedAttributes[item.schemaId] || [];
-                const existingAttributes = getAllExistingAttributeNames();
-                
-                return (
-                  <div 
-                    key={`${item.schemaId}-${index}`} 
-                    className={`border rounded-lg p-4 transition-all cursor-pointer ${
-                      selectedSchema === item.schemaName
-                        ? 'border-blue-400 bg-blue-50'
-                        : 'border-gray-200 hover:shadow-md hover:border-emerald-400'
-                    }`}
-                    onClick={() => setSelectedSchema(item.schemaName)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium text-gray-800">{item.schemaName}</h4>
-                        <p className="text-xs text-gray-500 mt-1">Version: {item.version}</p>
-                        <p className="text-xs text-wrap text-gray-500 truncate">ID: {item.schemaId}</p>
-                      </div>
+        {/* Content */}
+        <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+          {/* Search Section */}
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <div className="relative max-w-md">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search and select Schemas to use
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Type to search schemas..."
+                  className="w-full px-3 py-2 pl-10 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-300 transition-all duration-200 text-sm"
+                />
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                  {isLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-500"></div>
+                  ) : (
+                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+              
+              {showDropdown && searchResults.length > 0 && (
+                <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                  {searchResults.map((item, index) => (
+                    <div
+                      key={index}
+                      className={`p-2 hover:bg-emerald-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors text-sm ${
+                        selectedSchema === item ? 'bg-emerald-50 border-l-4 border-l-emerald-500' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedSchema(item);
+                        fetchSchemaDetails(item);
+                      }}
+                    >
+                      <span className="text-gray-800 font-medium">{item}</span>
                     </div>
-                    
-                    <div className="mt-3">
-                      <h5 className="text-xs font-medium text-gray-500 mb-1">Attributes:</h5>
-                      <div className="flex flex-wrap gap-1">
-                        {item.attributeNames.map((attr, idx) => {
-                          const isSelected = currentSelectedAttrs.includes(attr);
-                          const isHighlighted = attr === highlightedAttribute;
-                          const isAdded = existingAttributes.includes(attr);
-                          
-                          return (
-                            <span 
-                              key={idx} 
-                              className={`text-xs px-2 py-1 rounded cursor-pointer ${
-                                isSelected
-                                  ? 'bg-emerald-200 text-emerald-800'
-                                  : isAdded
-                                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
-                                    : isHighlighted
-                                      ? 'bg-blue-200 text-blue-800'
-                                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (!isAdded) {
-                                  handleAttributeSelect(item.schemaId, attr);
-                                }
-                              }}
-                              title={isAdded ? "This attribute is already in the template" : ""}
-                            >
-                              {attr}
-                              {isAdded && " ✓"}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="mt-3 text-right">
-                      <button
-                        className={`text-sm font-medium ${
-                          currentSelectedAttrs.length > 0
-                            ? 'text-emerald-500 hover:text-emerald-700'
-                            : 'text-gray-400 cursor-not-allowed'
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCardClick(item);
-                        }}
-                        disabled={currentSelectedAttrs.length === 0}
-                      >
-                        {currentSelectedAttrs.length > 0
-                          ? `+ Add ${currentSelectedAttrs.length} Attribute(s)`
-                          : '+ Add to Template'}
-                      </button>
-                      {currentSelectedAttrs.length > 0 && (
-                        <span className="text-xs text-gray-500 block mt-1">
-                          {currentSelectedAttrs.length} attribute(s) selected
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        )}
 
-        {isLoading && (
-          <div className="text-center py-4 text-gray-500">Searching schemas...</div>
-        )}
-        
-        {isFetchingDetails && (
-          <div className="text-center py-4 text-gray-500">Loading schema details...</div>
-        )}
+          {/* Results Section */}
+          <div className="p-3">
+            {isFetchingDetails ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading schema details...</p>
+                </div>
+              </div>
+            ) : schemaDetails.length > 0 ? (
+              <div>
+                <div className="flex items-center justify-around mb-1">
+                  <h6 className="text-sm font-semibold text-gray-800">
+                    Found {schemaDetails.length} schema{schemaDetails.length !== 1 ? 's' : ''}
+                  </h6>
+                  <div className="text-sm text-gray-900">
+                    Click attributes to select, then add to template
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {schemaDetails.map((item, index) => {
+                    const currentSelectedAttrs = selectedAttributes[item.schemaId] || [];
+                    const existingAttributes = getAllExistingAttributeNames();
+                    
+                    return (
+                      <div 
+                        key={`${item.schemaId}-${index}`} 
+                        className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                      >
+                        {/* Card Header */}
+                        <div className="flex items-center justify-between p-1 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                          <h6 className="font-semibold text-gray-900 text-sm " title={item.schemaName}>
+                            {item.schemaName}
+                          </h6>
+                          <span className="bg-emerald-100 text-emerald-800 px-1 py-1 rounded-full text-xs">
+                              {item.version}
+                            </span>
+                          
+                        </div>
+                        <div className="mt-1 p-2 text-xs text-gray-500">
+                            
+                            <span className="flex-wrap max-w-32" title={item.schemaId}>
+                              <b className="text-black">ID</b>: {item.schemaId}
+                            </span>
+                          </div>
+                        
+                        {/* Attributes Section */}
+                        <div className="p-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <h6 className="text-sm font-semibold text-gray-700">
+                              Attributes ({item.attributeNames.length})
+                            </h6>
+                            {currentSelectedAttrs.length > 0 && (
+                              <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full">
+                                {currentSelectedAttrs.length} selected
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="max-h-32 overflow-y-auto mb-4">
+                            <div className="flex flex-wrap gap-1">
+                              {item.attributeNames.map((attr, idx) => {
+                                const isSelected = currentSelectedAttrs.includes(attr);
+                                const isHighlighted = attr === highlightedAttribute;
+                                const isAdded = existingAttributes.includes(attr);
+                                
+                                return (
+                                  <button
+                                    key={idx} 
+                                    className={`text-xs px-3 py-1.5 rounded-full transition-all duration-200 font-medium ${
+                                      isSelected
+                                        ? 'bg-emerald-500 text-white shadow-sm transform scale-105'
+                                        : isAdded
+                                          ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                                          : isHighlighted
+                                            ? 'bg-emerald-200 text-emerald-800 shadow-sm'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'
+                                    }`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (!isAdded) {
+                                        handleAttributeSelect(item.schemaId, attr);
+                                      }
+                                    }}
+                                    disabled={isAdded}
+                                    title={isAdded ? "This attribute is already in the template" : "Click to select/deselect"}
+                                  >
+                                    {attr}
+                                    {isAdded && (
+                                      <span className="ml-1">✓</span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
 
-        {!isLoading && !isFetchingDetails && schemaDetails.length === 0 && (
-          <div className="text-center py-8 text-gray-400">
-            {searchQuery 
-              ? "No schemas found. Try a different search term." 
-              : "Search for schemas to display results"}
+                          {/* Add Button */}
+                          <button
+                            className={`w-full py-2 px-3 rounded-md font-medium transition-all duration-200 text-sm ${
+                              currentSelectedAttrs.length > 0
+                                ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm hover:shadow-md transform hover:scale-[1.02]'
+                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCardClick(item);
+                            }}
+                            disabled={currentSelectedAttrs.length === 0}
+                          >
+                            {currentSelectedAttrs.length > 0
+                              ? `Add ${currentSelectedAttrs.length} Attribute${currentSelectedAttrs.length !== 1 ? 's' : ''}`
+                              : 'Select attributes to add'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center">
+                  <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {searchQuery ? "No schemas found" : "Search to get started"}
+                  </h3>
+                  <p className="text-gray-500">
+                    {searchQuery 
+                      ? "Try adjusting your search terms or check the spelling." 
+                      : "Enter a search term above to find and add schemas to your template."}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

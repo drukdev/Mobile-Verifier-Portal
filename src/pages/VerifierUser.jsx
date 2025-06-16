@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import TableComponent from "../components/layout/TableComponent";
 import { useAuth } from "../context/AuthContext";
-import { v4 as uuidv4 } from 'uuid';
+import { X, Plus, Trash2, ChevronDown, Check, AlertCircle, Mail, RefreshCw } from "lucide-react";
 
 const VerifierUser = () => {
   const [users, setUsers] = useState([]);
@@ -25,9 +25,11 @@ const VerifierUser = () => {
   const [userIdExists, setUserIdExists] = useState(false);
   const [userIdChecking, setUserIdChecking] = useState(false);
   const [isSendingInvitation, setIsSendingInvitation] = useState(false);
-  const [generatedUsername, setGeneratedUsername] = useState(""); // New state for generated username
+  const [generatedUsername, setGeneratedUsername] = useState("");
+  const [isGeneratingUsername, setIsGeneratingUsername] = useState(false);
 
   const { isAuthenticated } = useAuth();
+  const base_api_url = import.meta.env.VITE_API_BASE_URL;
 
   const {
     register,
@@ -52,21 +54,104 @@ const VerifierUser = () => {
   const watchFirstName = watch("first_name");
   const watchLastName = watch("last_name");
 
-  // Generate username when first/last name changes
-  useEffect(() => {
-    if (watchFirstName || watchLastName) {
-      const newUsername = `${watchFirstName || ''}_${watchLastName || ''}_${uuidv4().substring(0, 8)}`.toLowerCase();
-      setGeneratedUsername(newUsername);
-    } else {
-      setGeneratedUsername("");
+  const handleUnauthorized = useCallback(() => {
+    localStorage.removeItem("authToken");
+    toast.error("Session expired. Please log in again.", { autoClose: 5000 });
+    setTimeout(() => window.location.reload(), 1000);
+  }, []);
+  const checkUsernameAvailability = useCallback(async (username) => {
+    const base_api_url = import.meta.env.VITE_API_BASE_URL;
+
+    const token = localStorage.getItem("authToken");
+    if (!token) return false;
+    try {
+      const response = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-user/check-username?username=${encodeURIComponent(username)}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          handleUnauthorized();
+          return false;
+        }
+        throw new Error(`Failed to check username: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error checking username availability:", error);
+      return false;
     }
-  }, [watchFirstName, watchLastName]);
+  }, [handleUnauthorized]);
+
+  const generateAndCheckUsername = useCallback(async (firstName, lastName) => {
+    setIsGeneratingUsername(true);
+    try {
+      const base = `${firstName || ''}_${lastName || ''}`
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
+
+      if (!base) {
+        return "";
+      }
+
+      let attempts = 0;
+      const maxAttempts = 3;
+      let candidate = "";
+      let isAvailable = false;
+
+      while (attempts < maxAttempts && !isAvailable) {
+        const uuid = crypto.randomUUID().replace(/-/g, '').substring(0, 8);
+        candidate = `${base}_${uuid}`;
+        isAvailable = await checkUsernameAvailability(candidate);
+        attempts++;
+      }
+
+      return isAvailable ? candidate : "";
+    } catch (error) {
+      console.error("Error generating username:", error);
+      return "";
+    } finally {
+      setIsGeneratingUsername(false);
+    }
+  }, [checkUsernameAvailability]);
+
+  useEffect(() => {
+    const generateUsername = async () => {
+      if (watchFirstName || watchLastName) {
+        try {
+          const suggestedUsername = await generateAndCheckUsername(
+            watchFirstName,
+            watchLastName
+          );
+          if (suggestedUsername) {
+            setGeneratedUsername(suggestedUsername);
+          } else {
+            setGeneratedUsername(`${watchFirstName || ''}_${watchLastName || ''}`.toLowerCase());
+          }
+        } catch (error) {
+          console.error("Error generating username:", error);
+          setGeneratedUsername(`${watchFirstName || ''}_${watchLastName || ''}`.toLowerCase());
+        }
+      } else {
+        setGeneratedUsername("");
+      }
+    };
+
+    const timeoutId = setTimeout(generateUsername, 500);
+    return () => clearTimeout(timeoutId);
+  }, [watchFirstName, watchLastName, generateAndCheckUsername]);
 
   const playSound = (soundFile) => {
     const audio = new Audio(soundFile);
     audio.play();
   };
-  const base_api_url = import.meta.env.VITE_API_BASE_URL;
 
   const checkUserIdExists = async (userId) => {
     const token = localStorage.getItem("authToken");
@@ -83,6 +168,10 @@ const VerifierUser = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          handleUnauthorized();
+          return false;
+        }
         throw new Error("Failed to check user ID");
       }
 
@@ -105,6 +194,7 @@ const VerifierUser = () => {
     }
 
     try {
+      setLoading(true);
       const response = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-user?pageSize=300`, {
         method: "GET",
         headers: {
@@ -113,23 +203,35 @@ const VerifierUser = () => {
         },
       });
 
-      const result = await response.json();
-      console.log("Fetched users:", result);
       if (!response.ok) {
-        //const errorText = await response.text();
-        const errorText = result.error || "Failed to fetch users";
-        throw new Error(`Failed to fetch users: ${errorText}`);
+        if (response.status === 401) {
+          handleUnauthorized();
+          return;
+        }
+        if (response.status === 404) {
+          setUsers([]);
+          return;
+        }
+        throw new Error("Failed to fetch users");
       }
 
-      if (result.data && Array.isArray(result.data) && result.data.length > 1) {
-        const users = result.data[1];
-        setUsers(users);
-      } else {
-        toast.error("Invalid data format received from the server");
+      const result = await response.json();
+      console.log("Fetched users:", result);
+      if (!result.data || !Array.isArray(result.data) || result.data.length < 2) {
+        setUsers([]);
+        return;
       }
+
+      const users = result.data[1];
+      setUsers(users);
     } catch (error) {
       playSound("/sounds/failure.mp3");
-      toast.error(`${error.message}`);
+      if (error.message === "Failed to fetch") {
+        toast.error("No response from server. Please check your connection.");
+      } else {
+        toast.error(error.message);
+      }
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -141,7 +243,6 @@ const VerifierUser = () => {
       toast.error("You are not authenticated");
       return;
     }
-    
     try {
       const response = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`, {
         method: "GET",
@@ -152,6 +253,10 @@ const VerifierUser = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          handleUnauthorized();
+          return;
+        }
         const errorText = await response.text();
         throw new Error(`Failed to fetch roles: ${errorText}`);
       }
@@ -184,9 +289,7 @@ const VerifierUser = () => {
       const nameParts = user.username.split(" ");
       const first_name = nameParts[0] || "";
       const last_name = nameParts.slice(1).join(" ") || "";
-      
       const roleValue = user.verifierRole ? `${user.verifierRole.id}:${user.verifierRole.role}` : "";
-      
       const formValues = {
         first_name,
         last_name,
@@ -242,9 +345,7 @@ const VerifierUser = () => {
       return;
     }
 
-    const username = data.user_id 
-      ? data.user_id 
-      : `${data.first_name}_${data.last_name}_${uuidv4().substring(0, 8)}`.toLowerCase();
+    const username = data.user_id || generatedUsername;
 
     if (!data.first_name || !data.last_name || !data.foundationID || !data.role || !data.email) {
       playSound("/sounds/failure.mp3");
@@ -278,6 +379,8 @@ const VerifierUser = () => {
     }
 
     const payload = {
+      firstName: data.first_name,
+      lastName: data.last_name,
       username: username,
       foundationID: data.foundationID,
       email: data.email,
@@ -297,6 +400,10 @@ const VerifierUser = () => {
         });
 
         if (!updateResponse.ok) {
+          if (updateResponse.status === 401) {
+            handleUnauthorized();
+            return;
+          }
           const errorText = await updateResponse.text();
           throw new Error(`Failed to update user: ${errorText}`);
         }
@@ -315,6 +422,10 @@ const VerifierUser = () => {
         });
 
         if (!createResponse.ok) {
+          if (createResponse.status === 401) {
+            handleUnauthorized();
+            return;
+          }
           throw new Error("Failed to create user");
         }
 
@@ -364,6 +475,10 @@ const VerifierUser = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          handleUnauthorized();
+          return;
+        }
         const errorText = await response.text();
         throw new Error(`Failed to delete user: ${errorText}`);
       }
@@ -408,14 +523,16 @@ const VerifierUser = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          handleUnauthorized();
+          return;
+        }
         const errorText = await response.text();
         throw new Error(`Failed to send invitation: ${errorText}`);
       }
 
       playSound("/sounds/success.mp3");
       toast.success("Invitation email sent successfully!");
-      
-      // Close modal after successful send
       setConfirmSendInvitation({ open: false, user: null });
     } catch (error) {
       playSound("/sounds/failure.mp3");
@@ -429,8 +546,8 @@ const VerifierUser = () => {
   const openStatusModal = (user) => {
     setSelectedUserForStatus(user);
     setSelectedStatus(
-      user.statusId === 3 ? "ACTIVE" : 
-      user.statusId === 4 ? "SUSPENDED" : 
+      user.statusId === 3 ? "ACTIVE" :
+      user.statusId === 4 ? "SUSPENDED" :
       "REVOKED"
     );
     setIsStatusModalOpen(true);
@@ -464,8 +581,12 @@ const VerifierUser = () => {
         }
       );
       if (!response.ok) {
+        if (response.status === 401) {
+          handleUnauthorized();
+          return;
+        }
         const errorText = await response.text();
-        throw new Error(`Failed to fetch roles: ${errorText}`);
+        throw new Error(`Failed to update status: ${errorText}`);
       }
       playSound("/sounds/success.mp3");
       toast.success(`User status updated to ${selectedStatus}`);
@@ -500,26 +621,36 @@ const VerifierUser = () => {
       cell: ({ row }) => {
         const statusId = row.original.statusId;
         let statusText = "Unknown";
+        let statusColor = "bg-gray-100 text-gray-800";
         switch (statusId) {
           case 1:
             statusText = "CREATED";
+            statusColor = "bg-blue-100 text-blue-800";
             break;
           case 2:
             statusText = "INVITED";
+            statusColor = "bg-purple-100 text-purple-800";
             break;
           case 3:
             statusText = "ACTIVE";
+            statusColor = "bg-emerald-100 text-emerald-800";
             break;
           case 4:
             statusText = "SUSPENDED";
+            statusColor = "bg-amber-100 text-amber-800";
             break;
           case 5:
             statusText = "REVOKED";
+            statusColor = "bg-red-100 text-red-800";
             break;
           default:
             statusText = "Unknown";
         }
-        return <span>{statusText}</span>;
+        return (
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+            {statusText}
+          </span>
+        );
       },
     },
     {
@@ -531,14 +662,15 @@ const VerifierUser = () => {
           <>
             {statusId <= 3 && (
               <button
-                className="text-emerald-400 border border-emerald-400 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-emerald-50 transition-colors"
+                className="inline-flex items-center text-emerald-600 hover:text-emerald-800 transition-colors text-sm font-medium"
                 onClick={() => openConfirmationModal(row.original)}
               >
+                <Mail size={16} className="mr-1" />
                 Re-Invite
               </button>
             )}
             {statusId >= 4 && (
-              <span className="text-blue-500 tex-bold">-</span>
+              <span className="text-gray-400">-</span>
             )}
           </>
         );
@@ -550,241 +682,336 @@ const VerifierUser = () => {
       cell: ({ row }) => { 
         const statusId = row.original.statusId;
         return (
-        <div className="flex justify-start gap-4 px-1">
-          {statusId !== 5 && (
-          <button
-            className="text-emerald-400 border border-emerald-400 px-1 py-1 rounded text-xs md:text-sm font-medium hover:bg-emerald-50 transition-colors"
-            onClick={() => openStatusModal(row.original)}
-          >
-            Update Status
-          </button> )}
-        </div>
-    )}
+          <div className="flex justify-start gap-4 px-1">
+            {statusId !== 5 && (
+            <button
+              className="inline-flex items-center text-emerald-600 hover:text-emerald-800 transition-colors text-sm font-medium"
+              onClick={() => openStatusModal(row.original)}
+            >
+              <RefreshCw size={16} className="mr-1" />
+              Update Status
+            </button> )}
+          </div>
+        )}
     },
   ];
 
   return (
-    <div className="flex-1 mt-4 overflow-x-auto">
-      <ToastContainer />
-      <div className="flex flex-col md:flex-row gap-4 mb-3">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-500 mb-1">Search Users</label>
-          <div className="relative w-full">
-            <input
-              type="text"
-              value={globalFilter}
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              placeholder="Search users..."
-              className="w-full px-4 py-2 pl-10 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 transition duration-200"
-            />
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              🔍
-            </span>
+    <div className="flex-1 overflow-x-auto p-4">
+      <ToastContainer position="top-right" autoClose={5000} />
+      {/* Header and Search */}
+      <div className="mb-6">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-end justify-between">
+          <div className="flex-1 w-full">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Search Users</label>
+            <div className="relative w-full">
+              <input
+                type="text"
+                value={globalFilter}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                placeholder="Search users..."
+                className="w-full px-4 py-2 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent hover:border-emerald-300 transition duration-200"
+              />
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </span>
+            </div>
           </div>
-        </div>
-        <div className="flex items-end">
           <button
-            className="bg-emerald-400 text-white px-6 py-1 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors h-[42px]"
-            onClick={() => openModal()}
-          >
-            Add New User
-          </button>
+                    className="inline-flex items-center px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium h-[42px]"
+                    onClick={() => openModal()}
+                  >
+                    <Plus size={16} className="mr-1" />
+                    Add New User
+                  </button>
         </div>
       </div>
 
+      {/* Table */}
       {loading ? (
-        <p className="text-center pt-8 text-gray-500">Loading Users...</p>
+        <p className="text-center pt-4 text-gray-500">Loading Users...</p>
       ) : users.length === 0 ? (
         <p className="text-center pt-4 text-red-400">No Users found</p>
       ) : (
-        <TableComponent
-          columns={columns}
-          data={users}
-          globalFilter={globalFilter}
-          setGlobalFilter={setGlobalFilter}
-        />
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <TableComponent
+            columns={columns}
+            data={users}
+            globalFilter={globalFilter}
+            setGlobalFilter={setGlobalFilter}
+          />
+        </div>
       )}
 
       {/* Add/Edit User Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96 ">
-            <h3 className="text-xl font-semibold mb-4 text-gray-500 text-center">{isEditing ? "Edit User" : "Add New User"}</h3>
-            {errorRoles && (
-              <div className="text-red-400 text-sm mb-4">Error loading roles: {errorRoles}</div>
-            )}
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="flex gap-4 mb-4 text-gray-500">
-                <div className="flex-1">
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-500 mb-2">
-                    First Name
-                  </label>
-                  <input
-                    id="firstName"
-                    type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 transition duration-200"
-                    {...register("first_name", { required: "First Name is required" })}
-                  />
-                  {errors.first_name && (
-                    <p className="text-red-500 text-sm">{errors.first_name.message}</p>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-500 mb-2">
-                    Last Name
-                  </label>
-                  <input
-                    id="lastName"
-                    type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 transition duration-200"
-                    {...register("last_name", { required: "Last Name is required" })}
-                  />
-                  {errors.last_name && (
-                    <p className="text-red-500 text-sm">{errors.last_name.message}</p>
-                  )}
-                </div>
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            {/* Header */}
+            <div className="bg-emerald-600 px-6 py-3 text-white">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">
+                  {isEditing ? "Edit User" : "Add New User"}
+                </h3>
+                <button
+                  onClick={closeModal}
+                  className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
               </div>
+            </div>
 
-              <div className="mb-4">
-                <label htmlFor="user_id" className="block text-sm font-medium text-gray-500 mb-2">
-                  User ID (Optional)
-                </label>
-                <input
-                  id="user_id"
-                  type="text"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 transition duration-200"
-                  {...register("user_id")}
-                  onChange={handleUserIdChange}
-                />
-                {userIdExists && (
-                  <p className="text-red-500 text-sm">User ID already exists. Please choose a different one.</p>
-                )}
-                {!isEditing && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    <span>Name Suggestion: </span>
-                    {generatedUsername ? (
-                      <button
-                        type="button"
-                        className="text-emerald-600 hover:underline cursor-pointer bg-transparent border-none p-0"
-                        onClick={() => {
-                          setValue('user_id', generatedUsername);
-                          handleUserIdChange({ target: { value: generatedUsername } });
-                        }}
-                      >
-                        {generatedUsername}
-                      </button>
-                    ) : (
-                      <span>Unique Identifier</span>
+            {/* Content */}
+            <div className="overflow-y-auto max-h-[calc(90vh-120px)] p-6">
+              {errorRoles && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                  <div className="flex items-center text-red-700">
+                    <AlertCircle size={16} className="mr-2" />
+                    <span>Error loading roles: {errorRoles}</span>
+                  </div>
+                </div>
+              )}
+              <form onSubmit={handleSubmit(onSubmit)} id="user-form">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-1">
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                      First Name *
+                    </label>
+                    <input
+                      id="firstName"
+                      type="text"
+                      className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm ${
+                        errors.first_name ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
+                      }`}
+                      placeholder="Enter first name"
+                      {...register("first_name", { required: "First Name is required" })}
+                    />
+                    {errors.first_name && (
+                      <div className="flex items-center text-red-600 text-xs mt-1">
+                        <AlertCircle size={12} className="mr-1" />
+                        {errors.first_name.message}
+                      </div>
                     )}
                   </div>
-                )}
-              </div>
 
-              <div className="mb-4">
-                <label htmlFor="foundationID" className="block text-sm font-medium text-gray-500 mb-2">
-                  Foundation ID
-                </label>
-                <input
-                  id="foundationID"
-                  type="text"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 transition duration-200"
-                  {...register("foundationID", { required: "Foundation ID is required" })}
-                />
-                {errors.foundationID && (
-                  <p className="text-red-500 text-sm">{errors.foundationID.message}</p>
-                )}
-              </div>
+                  <div className="space-y-1">
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                      Last Name *
+                    </label>
+                    <input
+                      id="lastName"
+                      type="text"
+                      className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm ${
+                        errors.last_name ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
+                      }`}
+                      placeholder="Enter last name"
+                      {...register("last_name", { required: "Last Name is required" })}
+                    />
+                    {errors.last_name && (
+                      <div className="flex items-center text-red-600 text-xs mt-1">
+                        <AlertCircle size={12} className="mr-1" />
+                        {errors.last_name.message}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-500 mb-2">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 transition duration-200"
-                  {...register("email", {
-                    required: "Email is required",
-                    pattern: {
-                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                      message: "Invalid email format",
-                    },
-                  })}
-                />
-                {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="role" className="block text-sm font-medium text-gray-500 mb-2">
-                  Role
-                </label>
-                <Controller
-                  name="role"
-                  control={control}
-                  rules={{ required: "Role is required" }}
-                  render={({ field }) => (
-                    <select
-                      id="role"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 transition duration-200"
-                      {...field}
-                      disabled={loadingRoles}
-                    >
-                      <option value="" className="text-gray-500">Select Role</option>
-                      {roles.map((role) => (
-                        <option 
-                          className="text-gray-500" 
-                          key={role.id} 
-                          value={`${role.id}:${role.role}`}
-                        >
-                          {role.id}: {role.role}
-                        </option>
-                      ))}
-                    </select>
+                <div className="mb-4">
+                  <label htmlFor="user_id" className="block text-sm font-medium text-gray-700">
+                    User ID <span className="ml-1 text-gray-500">(Recommended to use the suggested name)</span>
+                  </label>
+                  <input
+                    id="user_id"
+                    type="text"
+                    className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm ${
+                      userIdExists ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
+                    }`}
+                    placeholder="Enter user ID"
+                    {...register("user_id")}
+                    onChange={handleUserIdChange}
+                  />
+                  {userIdExists && (
+                    <div className="flex items-center text-red-600 text-xs mt-1">
+                      <AlertCircle size={12} className="mr-1" />
+                      User ID already exists. Please choose a different one.
+                    </div>
                   )}
-                />
-                {errors.role && <p className="text-red-500 text-sm">{errors.role.message}</p>}
-              </div>
+                  {!isEditing && (
+                    <div className="text-xs text-gray-500 mt-1 flex items-center">
+                      <span>Name Suggestion: </span>
+                      {isGeneratingUsername ? (
+                        <span className="ml-1 italic">Generating...</span>
+                      ) : generatedUsername ? (
+                        <button
+                          type="button"
+                          className="text-emerald-600 hover:underline cursor-pointer bg-transparent border-none p-0 ml-1"
+                          onClick={() => {
+                            setValue('user_id', generatedUsername);
+                            handleUserIdChange({ target: { value: generatedUsername } });
+                          }}
+                        >
+                          {generatedUsername}
+                        </button>
+                      ) : (
+                        <span className="ml-1">Enter first and last name to see suggestions</span>
+                      )}
+                    </div>
+                  )}
+                </div>
 
-              <div className="flex justify-end gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-1">
+                    <label htmlFor="foundationID" className="block text-sm font-medium text-gray-700">
+                      Foundation ID *
+                    </label>
+                    <input
+                      id="foundationID"
+                      type="text"
+                      className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm ${
+                        errors.foundationID ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
+                      }`}
+                      placeholder="Enter foundation ID"
+                      {...register("foundationID", { required: "Foundation ID is required" })}
+                    />
+                    {errors.foundationID && (
+                      <div className="flex items-center text-red-600 text-xs mt-1">
+                        <AlertCircle size={12} className="mr-1" />
+                        {errors.foundationID.message}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      Email *
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm ${
+                        errors.email ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
+                      }`}
+                      placeholder="Enter email"
+                      {...register("email", {
+                        required: "Email is required",
+                        pattern: {
+                          value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                          message: "Invalid email format",
+                        },
+                      })}
+                    />
+                    {errors.email && (
+                      <div className="flex items-center text-red-600 text-xs mt-1">
+                        <AlertCircle size={12} className="mr-1" />
+                        {errors.email.message}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                    Role *
+                  </label>
+                  <Controller
+                    name="role"
+                    control={control}
+                    rules={{ required: "Role is required" }}
+                    render={({ field }) => (
+                      <select
+                        id="role"
+                        className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm ${
+                          errors.role ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
+                        } ${loadingRoles ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        {...field}
+                        disabled={loadingRoles}
+                      >
+                        <option value="">Select Role</option>
+                        {roles.map((role) => (
+                          <option
+                            key={role.id}
+                            value={`${role.id}:${role.role}`}
+                          >
+                            {role.id}: {role.role}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  />
+                  {errors.role && (
+                    <div className="flex items-center text-red-600 text-xs mt-1">
+                      <AlertCircle size={12} className="mr-1" />
+                      {errors.role.message}
+                    </div>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-xs text-gray-500">
+                * Required fields
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
                   onClick={closeModal}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors"
-                  disabled={loadingRoles || errorRoles || userIdChecking || userIdExists}
+                  form="user-form"
+                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loadingRoles || errorRoles || userIdChecking || userIdExists || isGeneratingUsername}
                 >
                   {isEditing ? "Update User" : "Create User"}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
-            <p className="text-sm mb-4">Are you sure you want to delete {userToDelete?.username}?</p>
-            <div className="flex justify-end gap-2">
-              <button
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
-                onClick={() => setIsDeleteModalOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
-                onClick={handleDeleteUser}
-              >
-                Delete
-              </button>
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="bg-red-100 px-6 py-3 text-red-800 rounded-t-lg">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Confirm Deletion</h3>
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="p-1 hover:bg-red-200/50 rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-700 mb-6">
+                Are you sure you want to delete <span className="font-medium">{userToDelete?.username}</span>? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                  onClick={() => setIsDeleteModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+                  onClick={handleDeleteUser}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -792,51 +1019,69 @@ const VerifierUser = () => {
 
       {/* Invitation Confirmation Modal */}
       {confirmSendInvitation.open && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-lg font-semibold mb-4">Confirm Invitation</h3>
-            <p className="text-sm mb-4">
-              Are you sure you want to send an invitation to {confirmSendInvitation.user.email}?
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
-                onClick={() => setConfirmSendInvitation({ open: false, user: null })}
-                disabled={isSendingInvitation}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed min-w-[120px]"
-                onClick={handleSendInvitation}
-                disabled={isSendingInvitation}
-              >
-                {isSendingInvitation ? (
-                  <>
-                    <svg 
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      fill="none" 
-                      viewBox="0 0 24 24"
-                    >
-                      <circle 
-                        className="opacity-25" 
-                        cx="12" 
-                        cy="12" 
-                        r="10" 
-                        stroke="currentColor" 
-                        strokeWidth="4"
-                      ></circle>
-                      <path 
-                        className="opacity-75" 
-                        fill="currentColor" 
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Sending...
-                  </>
-                ) : "Send Invitation"}
-              </button>
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="bg-emerald-600 px-6 py-3 text-white rounded-t-lg">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Confirm Invitation</h3>
+                <button
+                  onClick={() => setConfirmSendInvitation({ open: false, user: null })}
+                  className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                  disabled={isSendingInvitation}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-700 mb-6">
+                Are you sure you want to send an invitation to <span className="font-medium">{confirmSendInvitation.user.email}</span>?
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                  onClick={() => setConfirmSendInvitation({ open: false, user: null })}
+                  disabled={isSendingInvitation}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed min-w-[120px]"
+                  onClick={handleSendInvitation}
+                  disabled={isSendingInvitation}
+                >
+                  {isSendingInvitation ? (
+                    <>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail size={16} className="mr-1" />
+                      Send Invitation
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -844,40 +1089,52 @@ const VerifierUser = () => {
 
       {/* Status Update Modal */}
       {isStatusModalOpen && selectedUserForStatus && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-xl font-semibold mb-4">Update User Status</h3>
-            <div className="mb-4">
-              <p className="text-sm mb-2">
-                Updating status for: <strong>{selectedUserForStatus.username}</strong>
-              </p>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
-                Select Status
-              </label>
-              <select
-                id="status"
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 transition duration-200"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-              >
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="SUSPENDED">SUSPENDED</option>
-                <option value="REVOKED">REVOKED</option>
-              </select>
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="bg-emerald-600 px-6 py-3 text-white rounded-t-lg">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Update User Status</h3>
+                <button
+                  onClick={closeStatusModal}
+                  className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <button
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
-                onClick={closeStatusModal}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors"
-                onClick={handleStatusUpdate}
-              >
-                Update Status
-              </button>
+            <div className="p-6">
+              <p className="text-sm text-gray-700 mb-4">
+                Updating status for: <span className="font-medium">{selectedUserForStatus.username}</span>
+              </p>
+              <div className="mb-6">
+                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Status
+                </label>
+                <select
+                  id="status"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent hover:border-emerald-300 transition-all text-sm"
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="SUSPENDED">SUSPENDED</option>
+                  <option value="REVOKED">REVOKED</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                  onClick={closeStatusModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium"
+                  onClick={handleStatusUpdate}
+                >
+                  Update Status
+                </button>
+              </div>
             </div>
           </div>
         </div>

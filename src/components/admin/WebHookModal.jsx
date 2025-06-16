@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { X, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -44,6 +45,18 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
     setErrors({});
   }, [organization]);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
     
@@ -51,11 +64,7 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
       newErrors.webhookId = "Webhook ID is required";
     }
 
-   
-
     if (formData.authVersion === "v1") {
-      
-
       if (!formData.clientId.trim()) {
         newErrors.clientId = "Client ID is required";
       }
@@ -74,20 +83,7 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     
     if (!validateForm()) {
       toast.error("Please fix the errors in the form");
@@ -132,7 +128,7 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
       }
 
       const responseData = await response.json();
-      toast.success(`Webhook ${responseData.data.webhookId} registered successfully!`);
+      //toast.success(`Webhook ${responseData.data.webhookId} registered successfully!`);
       onSuccess(responseData.data);
       onClose();
     } catch (error) {
@@ -146,178 +142,238 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-[600px] max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">
-            {organization ? "Update WebHook" : "Register New WebHook"}
-          </h2>
-          <button
-            onClick={onClose} 
-            className="text-gray-500 hover:text-gray-700 transition-colors"
-            disabled={isLoading}
-          >
-            ✖
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Webhook ID
-            </label>
-            <input
-              type="text"
-              name="webhookId"
-              value={formData.webhookId}
-              onChange={handleChange}
-              className={`w-full p-2 border ${errors.webhookId ? "border-red-500" : "border-gray-300"} rounded-md focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 bg-gray-100`}
-              required
-              disabled={true}
-            />
-            {errors.webhookId && <p className="mt-1 text-sm text-red-600">{errors.webhookId}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Authentication Version
-            </label>
-            <select
-              name="authVersion"
-              value={formData.authVersion}
-              onChange={handleChange}
-              className={`w-full p-2 border  rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200`}
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="bg-emerald-600 px-6 py-3 text-white">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">
+              {organization ? "Update WebHook" : "Register New WebHook"}
+            </h3>
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-white/20 rounded-lg transition-colors"
               disabled={isLoading}
             >
-              <option value="v1">Version 1 (OAuth)</option>
-              <option value="v2">Version 2 (Token)</option>
-            </select>
+              <X size={20} />
+            </button>
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Webhook URL
-            </label>
-            <input
-              type="text"
-              name="webhookURL"
-              value={formData.webhookURL}
-              onChange={handleChange}
-              className={`w-full p-2 border ${errors.webhookURL ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200`}
-
-
-
-              required
-              disabled={isLoading}
-            />
-            {errors.webhookURL && <p className="mt-1 text-sm text-red-600">{errors.webhookURL}</p>}
-          </div>
-
-          <div className="transition-all duration-300 ease-in-out ">
-            {formData.authVersion === "v1" ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Authentication URL
+        {/* Content */}
+        <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+          <div className="p-6">
+            <div className="space-y-6">
+              {/* Webhook ID and Authentication Version */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label htmlFor="webhookId" className="block text-sm font-medium text-gray-700">
+                    Webhook ID *
                   </label>
                   <input
-                    type="url"
-                    name="authUrl"
-                    value={formData.authUrl}
-                    onChange={handleChange}
-                    className={`w-full p-2 border ${errors.authUrl ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200`}
-                   
-
-                    required
-                    disabled={isLoading}
-                  />
-                  {errors.authUrl && <p className="mt-1 text-sm text-red-600">{errors.authUrl}</p>}
-                </div>
-
-                <div className="hidden">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Grant Type
-                  </label>
-                  <input
+                    id="webhookId"
                     type="text"
-                    name="grantType"
-                    value={formData.grantType}
+                    name="webhookId"
+                    value={formData.webhookId}
                     onChange={handleChange}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
-                    disabled={isLoading}
+                    disabled={true}
+                    className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all font-mono text-sm opacity-60 cursor-not-allowed ${
+                      errors.webhookId ? 'border-red-300 focus:ring-red-500' : 'border-gray-200'
+                    }`}
                   />
+                  {errors.webhookId && (
+                    <div className="flex items-center text-red-600 text-xs mt-1">
+                      <AlertCircle size={12} className="mr-1" />
+                      {errors.webhookId}
+                    </div>
+                  )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Client ID
+                <div className="space-y-1">
+                  <label htmlFor="authVersion" className="block text-sm font-medium text-gray-700">
+                    Authentication Version *
                   </label>
-                  <input
-                    type="text"
-                    name="clientId"
-                    value={formData.clientId}
+                  <select
+                    id="authVersion"
+                    name="authVersion"
+                    value={formData.authVersion}
                     onChange={handleChange}
-                    className={`w-full p-2 border ${errors.clientId ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200`}
-
-                    required
                     disabled={isLoading}
-                  />
-                  {errors.clientId && <p className="mt-1 text-sm text-red-600">{errors.clientId}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Client Secret
-                  </label>
-                  <input
-                    type="password"
-                    name="clientSecret"
-                    value={formData.clientSecret}
-                    onChange={handleChange}
-                    className={`w-full p-2 border ${errors.clientSecret ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200`}
-                    required
-                    disabled={isLoading}
-                  />
-                  {errors.clientSecret && <p className="mt-1 text-sm text-red-600">{errors.clientSecret}</p>}
+                    className="w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm border-gray-200 hover:border-emerald-300"
+                  >
+                    <option value="v1">Version 1 (OAuth)</option>
+                    <option value="v2">Version 2 (Token)</option>
+                  </select>
                 </div>
               </div>
-            ) : (
-              <div className="transition-all duration-300 ease-in-out overflow-hidden">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Access Token
+
+              {/* Webhook URL - Full Width */}
+              <div className="space-y-1">
+                <label htmlFor="webhookURL" className="block text-sm font-medium text-gray-700">
+                  Webhook URL *
                 </label>
                 <input
-                  type="password"
-                  name="token"
-                  value={formData.token}
+                  id="webhookURL"
+                  type="text"
+                  name="webhookURL"
+                  value={formData.webhookURL}
                   onChange={handleChange}
-                  className={`w-full p-2 border ${errors.token ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-green-500 transition duration-200`}
-                  required
                   disabled={isLoading}
+                  className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm ${
+                    errors.webhookURL ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
+                  }`}
                 />
-                {errors.token && <p className="mt-1 text-sm text-red-600">{errors.token}</p>}
+                {errors.webhookURL && (
+                  <div className="flex items-center text-red-600 text-xs mt-1">
+                    <AlertCircle size={12} className="mr-1" />
+                    {errors.webhookURL}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+              {/* Conditional Authentication Fields */}
+              <div className="transition-all duration-300 ease-in-out">
+                {formData.authVersion === "v1" ? (
+                  <div className="space-y-6">
+                    {/* Authentication URL - Full Width */}
+                    <div className="space-y-1">
+                      <label htmlFor="authUrl" className="block text-sm font-medium text-gray-700">
+                        Authentication URL *
+                      </label>
+                      <input
+                        id="authUrl"
+                        type="url"
+                        name="authUrl"
+                        value={formData.authUrl}
+                        onChange={handleChange}
+                        disabled={isLoading}
+                        className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm ${
+                          errors.authUrl ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
+                        }`}
+                      />
+                      {errors.authUrl && (
+                        <div className="flex items-center text-red-600 text-xs mt-1">
+                          <AlertCircle size={12} className="mr-1" />
+                          {errors.authUrl}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Client ID and Client Secret */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label htmlFor="clientId" className="block text-sm font-medium text-gray-700">
+                          Client ID *
+                        </label>
+                        <input
+                          id="clientId"
+                          type="text"
+                          name="clientId"
+                          value={formData.clientId}
+                          onChange={handleChange}
+                          disabled={isLoading}
+                          className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all font-mono text-sm ${
+                            errors.clientId ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
+                          }`}
+                        />
+                        {errors.clientId && (
+                          <div className="flex items-center text-red-600 text-xs mt-1">
+                            <AlertCircle size={12} className="mr-1" />
+                            {errors.clientId}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-1">
+                        <label htmlFor="clientSecret" className="block text-sm font-medium text-gray-700">
+                          Client Secret *
+                        </label>
+                        <input
+                          id="clientSecret"
+                          type="password"
+                          name="clientSecret"
+                          value={formData.clientSecret}
+                          onChange={handleChange}
+                          disabled={isLoading}
+                          className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all font-mono text-sm ${
+                            errors.clientSecret ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
+                          }`}
+                        />
+                        {errors.clientSecret && (
+                          <div className="flex items-center text-red-600 text-xs mt-1">
+                            <AlertCircle size={12} className="mr-1" />
+                            {errors.clientSecret}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Hidden Grant Type Field */}
+                    <div className="hidden">
+                      <input
+                        type="text"
+                        name="grantType"
+                        value={formData.grantType}
+                        onChange={handleChange}
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="transition-all duration-300 ease-in-out overflow-hidden">
+                    <div className="space-y-1">
+                      <label htmlFor="token" className="block text-sm font-medium text-gray-700">
+                        Access Token *
+                      </label>
+                      <input
+                        id="token"
+                        type="password"
+                        name="token"
+                        value={formData.token}
+                        onChange={handleChange}
+                        disabled={isLoading}
+                        className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all font-mono text-sm ${
+                          errors.token ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
+                        }`}
+                      />
+                      {errors.token && (
+                        <div className="flex items-center text-red-600 text-xs mt-1">
+                          <AlertCircle size={12} className="mr-1" />
+                          {errors.token}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+          <div className="text-xs text-gray-500">
+            * Required fields
+          </div>
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
               disabled={isLoading}
             >
               Cancel
             </button>
             <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-emerald-400 rounded-md hover:bg-emerald-600 transition-colors disabled:opacity-50"
+              type="button"
+              onClick={handleSubmit}
+              className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium disabled:opacity-50"
               disabled={isLoading}
             >
-              {isLoading ? "Processing..." : organization ? "Register Webhook" : "Register"}
+              {isLoading ? "Processing..." : organization ? "Update Webhook" : "Register Webhook"}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

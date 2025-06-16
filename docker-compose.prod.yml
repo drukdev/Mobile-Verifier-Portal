@@ -1,12 +1,52 @@
+# docker-compose.dev.yml - Development
 version: '3.8'
 
 services:
-  web:
+  app-dev:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:8000
+    stdin_open: true
+    tty: true
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+---
+# docker-compose.prod.yml - Production
+version: '3.8'
+
+services:
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     ports:
       - "80:80"
-    restart: unless-stopped
     environment:
-      - NODE_ENV=production
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-https://api.domain.com}
+      - VITE_APP_ENV=production
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  app-network:
+    driver: bridge

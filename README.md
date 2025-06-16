@@ -65,3 +65,18 @@ Inconsistent installs across teams.
 Wasted disk space.
 
 Stick to pnpm for safety! 🚀
+
+
+Development:
+bash# Using Docker Compose
+docker-compose -f docker-compose.dev.yml up -d
+
+# Using Makefile
+make dev-run
+
+Production:
+bash# Using Docker Compose
+docker-compose -f docker-compose.prod.yml up -d
+
+# Using Makefile
+make prod-run

@@ -65,7 +65,7 @@ node_modules/
 .cache/
 
 # Vite build output
-#dist/
+dist/
 #out/
 
 # Debug logs from Vite

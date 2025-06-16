@@ -1,59 +1,59 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { ToastContainer, toast } from "react-toastify";
+import { useForm, Controller } from "react-hook-form";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
 import TableComponent from "../components/layout/TableComponent";
 import { useAuth } from "../context/AuthContext";
+import { X, Plus, Trash2, ChevronDown, Check, AlertCircle, Mail, RefreshCw } from "lucide-react";
 
 const VerifierRole = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState(null);
-  const [globalFilter, setGlobalFilter] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingRoleId, setEditingRoleId] = useState(null);
+  const [globalFilter, setGlobalFilter] = useState("");
 
+  // Fixed: Destructure logout from useAuth
   const { isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
 
-  // Initialize react-hook-form
   const {
     register,
     handleSubmit,
     reset,
-    setValue,
+    control,
     formState: { errors },
-  } = useForm();
+    setValue,
+  } = useForm({
+    defaultValues: {
+      role: "",
+    },
+  });
+
   const base_api_url = import.meta.env.VITE_API_BASE_URL;
 
-  const handleUnauthorized = () => {
-      toast.error("Unauthorized");
-      logout();
-    };
-
-  // Function to play sound
   const playSound = (soundFile) => {
     const audio = new Audio(soundFile);
     audio.play();
   };
 
-  // Fetch roles from the server with JWT token
-  const fetchRoles = async () => {
-    setLoading(true);
-    const token = localStorage.getItem("authToken");
+  const handleUnauthorized = () => {
+    toast.error("Unauthorized");
+    logout(); // Now this will work properly
+  };
 
+  const fetchRoles = async () => {
+    const token = localStorage.getItem("authToken");
     if (!token) {
       toast.error("You are not authenticated");
       return;
     }
 
     try {
-      const url = `${base_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`;
-
-
-      const response = await fetch(url, {
+      setLoading(true);
+      const response = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-role?pageSize=300`, {
         method: "GET",
         headers: {
           accept: "*/*",
@@ -61,24 +61,17 @@ const VerifierRole = () => {
         },
       });
 
-
       if (response.status === 401) {
         handleUnauthorized();
         return;
       }
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to fetch roles: ${errorText}`);
       }
 
       const result = await response.json();
-      console.log((`this is the result`, result.statusCode));
-      if (result.statusCode === 404) {
-        playSound("/sounds/failure.mp3");
-        toast.error("No roles found");
-        setRoles([]);
-        return;
-      }
       if (result.data && Array.isArray(result.data) && result.data.length > 1) {
         const roles = result.data[1];
         setRoles(roles);
@@ -87,7 +80,7 @@ const VerifierRole = () => {
       }
     } catch (error) {
       playSound("/sounds/failure.mp3");
-      toast.error(`${error.message}`);
+      toast.error("Failed to fetch roles");
     } finally {
       setLoading(false);
     }
@@ -99,19 +92,50 @@ const VerifierRole = () => {
     }
   }, [isAuthenticated]);
 
-  // Handle form submission for adding or updating a role
+  const openModal = (role = null) => {
+    if (role) {
+      reset({
+        role: role.role,
+      });
+      setIsEditing(true);
+      setEditingRoleId(role.id);
+    } else {
+      reset({
+        role: "",
+      });
+      setIsEditing(false);
+      setEditingRoleId(null);
+    }
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    reset({
+      role: "",
+    });
+    setIsEditing(false);
+    setEditingRoleId(null);
+  };
+
   const onSubmit = async (data) => {
     const token = localStorage.getItem("authToken");
-
     if (!token) {
       toast.error("You are not authenticated");
       return;
     }
 
-    const url = editingRole
-      ? `${base_api_url}/mobile-verifier/v1/verifier-role/${editingRole.id}`
+    if (!data.role) {
+      playSound("/sounds/failure.mp3");
+      toast.error("Role name is required!");
+      return;
+    }
+
+    const url = isEditing
+      ? `${base_api_url}/mobile-verifier/v1/verifier-role/${editingRoleId}`
       : `${base_api_url}/mobile-verifier/v1/verifier-role/verifier-roles`;
-    const method = editingRole ? "PATCH" : "POST";
+    const method = isEditing ? "PATCH" : "POST";
+
     try {
       const response = await fetch(url, {
         method,
@@ -122,49 +146,42 @@ const VerifierRole = () => {
         },
         body: JSON.stringify(data),
       });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Failed to ${editingRole ? "update" : "add"} role: ${errorText}`);
+        throw new Error(`Failed to ${isEditing ? "update" : "add"} role: ${errorText}`);
       }
 
       const result = await response.json();
 
-      if (editingRole) {
-        setRoles((prevRoles) =>
-          prevRoles.map((role) => (role.id === editingRole.id ? result.data : role))
-        );
+      if (isEditing) {
+        setRoles(roles.map(role => role.id === editingRoleId ? result.data : role));
         playSound("/sounds/success.mp3");
-        toast.success(result.message || "Role updated successfully");
-        setIsModalOpen(false);
-        reset();
-        setTimeout(() => {
-          navigate("/dashboard/verifier-role");
-        }, 2000);
+        toast.success("Role updated successfully!");
       } else {
-        setRoles((prevRoles) => [...prevRoles, result.data]);
+        setRoles([...roles, result.data]);
         playSound("/sounds/success.mp3");
-        toast.success(result.message || "Role created successfully");
-        setIsModalOpen(false);
-        reset();
-        setTimeout(() => {
-          navigate("/dashboard/verifier-role");
-        }, 2000);
+        toast.success("Role added successfully!");
       }
+      closeModal();
+      fetchRoles();
     } catch (error) {
       playSound("/sounds/failure.mp3");
-      toast.error(`Failed to ${editingRole ? "update" : "add"} role. ${error}`);
+      toast.error(`${error.message}`);
     }
   };
 
-  // Open delete confirmation modal
-  const handleDeleteRole = (roleId) => {
-    const role = roles.find((role) => role.id === roleId);
+  const openDeleteModal = (role) => {
     setRoleToDelete(role);
     setIsDeleteModalOpen(true);
   };
 
-  // Confirm delete action
-  const confirmDelete = async () => {
+  const handleDeleteRole = async () => {
     const token = localStorage.getItem("authToken");
 
     if (!token) {
@@ -173,188 +190,221 @@ const VerifierRole = () => {
     }
 
     try {
-      const response = await fetch(
-        `${base_api_url}/mobile-verifier/v1/verifier-role/${roleToDelete.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            accept: "*/*",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${base_api_url}/mobile-verifier/v1/verifier-role/${roleToDelete.id}`, {
+        method: "DELETE",
+        headers: {
+          accept: "*/*",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        handleUnauthorized();
+        return;
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to delete role: ${errorText}`);
       }
 
-      setRoles((prevRoles) => prevRoles.filter((role) => role.id !== roleToDelete.id));
+      setRoles(roles.filter(role => role.id !== roleToDelete.id));
       playSound("/sounds/success.mp3");
-      toast.success("Role deleted successfully");
-      setIsDeleteModalOpen(false);
+      toast.success("Role deleted successfully!");
     } catch (error) {
       playSound("/sounds/failure.mp3");
-      toast.error(`Failed to delete role: ${error}`);
+      toast.error(`${error.message}`);
+    } finally {
+      setIsDeleteModalOpen(false);
+      setRoleToDelete(null);
     }
   };
 
-  // Open modal for editing a role
-  const handleEditRole = (role) => {
-    setEditingRole(role);
-    setValue("role", role.role);
-    setIsModalOpen(true);
-  };
-
-  // Columns for the table
   const columns = [
-    { accessorKey: "id", header: "Role ID", cell: (info) => info.getValue(), enableSorting: true },
-    { accessorKey: "role", header: "Role Name", cell: (info) => info.getValue(), enableSorting: true },
-  ];
-{/*{
-      id: "actions",
+    {
+      header: "Role ID",
+      accessorKey: "id",
+    },
+    {
+      header: "Role Name",
+      accessorKey: "role",
+    },
+    {
       header: "Actions",
-      cell: (info) => {
-        const role = info.row.original;
-        return (
-          <div className="flex justify-start gap-4">
-            <button
-              className="text-emerald-400 border border-emerald-400 px-2 py-1 rounded text-xs md:text-sm font-medium hover:bg-green-50 transition-colors"
-              onClick={() => handleEditRole(role)}
-            >
-              Update
-            </button>
-            
-          </div>
-        );
-      },
-    }, */}
-  return (
-    <div className="flex-1 mt-4 overflow-x-auto">
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+      accessorKey: "actions",
+      cell: ({ row }) => (
+        <div className="flex justify-start gap-4 px-1">
+          <button
+            className="inline-flex items-center text-emerald-600 hover:text-emerald-800 transition-colors text-sm font-medium"
+            onClick={() => openModal(row.original)}
+          >
+            <RefreshCw size={16} className="mr-1" />
+            Edit
+          </button>
+          {/*<button
+            className="inline-flex items-center text-red-600 hover:text-red-800 transition-colors text-sm font-medium"
+            onClick={() => openDeleteModal(row.original)}
+          >
+            <Trash2 size={16} className="mr-1" />
+            Delete
+          </button>*/}
+        </div>
+      ),
+    },
+  ];
 
-      {/* Updated Search and Add Role Section */}
-      <div className="flex flex-col md:flex-row gap-4 mb-3">
+  return (
+    <div className="flex-1 overflow-x-auto p-4">
+      <ToastContainer position="top-right" autoClose={5000} />
+      
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-500 mb-1">Search Roles</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Search Roles</label>
           <div className="relative w-full">
             <input
               type="text"
               value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
               placeholder="Search roles..."
-              className="w-full px-4 py-2 pl-10 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 transition duration-200"
+              className="w-full px-4 py-2 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent hover:border-emerald-300 transition duration-200"
             />
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              🔍
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
             </span>
           </div>
         </div>
-        <div className="flex items-end">
-          <button
-            className="bg-emerald-400 text-white px-6 py-1 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors h-[42px]"
-            onClick={() => {
-              setIsModalOpen(true);
-              setEditingRole(null);
-              reset();
-            }}
-          >
-            Add New Role
-          </button>
-        </div>
+        <button
+          className="inline-flex items-center px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium h-[42px]"
+          onClick={() => openModal()}
+        >
+          <Plus size={16} className="mr-1" />
+          Add New Role
+        </button>
       </div>
 
-      {/* Table Component */}
+      {/* Table */}
       {loading ? (
-        <p className="text-center pt-8 text-gray-500">Loading roles...</p>
+        <p className="text-center pt-4 text-gray-500">Loading Roles...</p>
       ) : roles.length === 0 ? (
-        <p className="text-center pt-4 text-red-400">No roles found</p>
+        <p className="text-center pt-4 text-red-400">No Roles found</p>
       ) : (
-        <TableComponent
-          columns={columns}
-          data={roles}
-          globalFilter={globalFilter}
-          setGlobalFilter={setGlobalFilter}
-        />
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <TableComponent
+            columns={columns}
+            data={roles}
+            globalFilter={globalFilter}
+            setGlobalFilter={setGlobalFilter}
+          />
+        </div>
       )}
 
-      {/* Modal for Adding/Editing Role */}
+      {/* Add/Edit Role Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-xl font-semibold mb-4 text-gray-500 text-center">
-              {editingRole ? "Edit Role" : "Add New Role"}
-            </h3>
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="mb-4">
-                <label htmlFor="role" className="block text-sm font-medium text-gray-500 mb-2">
-                  Role Name
-                </label>
-                <input
-                  id="role"
-                  type="text"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 hover:border-emerald-600 transition duration-200"
-                  {...register("role", { required: "Role name is required" })}
-                />
-                {errors.role && (
-                  <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>
-                )}
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden">
+            {/* Header */}
+            <div className="bg-emerald-600 px-6 py-3 text-white">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">
+                  {isEditing ? "Edit Role" : "Add New Role"}
+                </h3>
+                <button
+                  onClick={closeModal}
+                  className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <div className="flex justify-end gap-2">
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto max-h-[calc(90vh-120px)] p-6">
+              <form onSubmit={handleSubmit(onSubmit)} id="role-form">
+                <div className="mb-4">
+                  <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                    Role Name *
+                  </label>
+                  <input
+                    id="role"
+                    type="text"
+                    className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm ${
+                      errors.role ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
+                    }`}
+                    placeholder="Enter role name"
+                    {...register("role", { required: "Role name is required" })}
+                  />
+                  {errors.role && (
+                    <div className="flex items-center text-red-600 text-xs mt-1">
+                      <AlertCircle size={12} className="mr-1" />
+                      {errors.role.message}
+                    </div>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+              <div className="text-xs text-gray-500">
+                * Required fields
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    reset();
-                  }}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                  onClick={closeModal}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors"
+                  form="role-form"
+                  className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium"
                 >
-                  {editingRole ? "Update" : "Create Role"}
+                  {isEditing ? "Update Role" : "Create Role"}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-xl font-semibold mb-4 text-center">Confirm Deletion</h3>
-            <p className="text-gray-600 text-center mb-6">
-              Are you sure you want to delete the role{" "}
-              <strong className="text-red-500">{roleToDelete?.role}</strong>?
-            </p>
-            <div className="flex justify-center gap-4">
-              <button
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-600 transition-colors"
-                onClick={() => setIsDeleteModalOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
-                onClick={confirmDelete}
-              >
-                Delete
-              </button>
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="bg-red-100 px-6 py-3 text-red-800 rounded-t-lg">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Confirm Deletion</h3>
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="p-1 hover:bg-red-200/50 rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-700 mb-6">
+                Are you sure you want to delete <span className="font-medium">{roleToDelete?.role}</span>? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+                  onClick={() => setIsDeleteModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                {/*<button
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+                  onClick={handleDeleteRole}
+                >
+                  Delete
+                </button> */}
+              </div>
             </div>
           </div>
         </div>

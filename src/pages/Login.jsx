@@ -114,7 +114,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="min-h-screen flex bg-gray-50">
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -134,41 +134,41 @@ const Login = () => {
           <img className="h-12 md:h-16 w-auto" src={logo} alt="Logo" />
         </div>
 
-        {/* Moved title up with increased padding */}
         <div className="mt-8 text-center">
-          <h2 className="text-2xl ml-10 md:text-3xl font-extrabold text-gray-600">Mobile Verifier Portal</h2>
+          <h2 className="text-2xl ml-10 md:text-3xl font-bold text-gray-700">Mobile Verifier Portal</h2>
         </div>
 
         <div className="flex-grow flex items-center justify-center pl-16 pb-2 md:pb-32">
           <div className="w-full max-w-sm">
-            {/* Smaller greeting */}
-            <h4 className="mt-2 text-center text-xl font-medium text-gray-600">Kuzuzangpo!</h4>
+            <h4 className="mt-2 text-center text-xl font-medium text-gray-700">Kuzuzangpo!</h4>
 
-            {/* Removed background from role indicator */}
-            <p className="mt-1 text-center text-lg font-semibold text-gray-600">
+            <p className="mt-1 text-center text-lg font-semibold text-gray-700">
               Logging in as{' '}
               <span className="text-emerald-600 font-bold">
                 {role === 'client' ? 'Client Admin' : 'NDI Admin'}
               </span>
             </p>
 
-            {/* Moved role toggle above input fields and made smaller */}
             <div className="text-center mt-8">
               <button
                 onClick={toggleRole}
-                className="text-emerald-600 hover:text-emerald-800 text-xs font-semibold underline focus:outline-none"
+                className="text-emerald-600 hover:text-emerald-800 text-sm font-medium underline focus:outline-none transition-colors"
               >
                 Switch to {role === 'client' ? 'NDI Admin' : 'Client Admin'}
               </button>
             </div>
 
-            {error && <p className="text-red-500 text-sm mt-1 text-center">{error}</p>}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-3 mt-4">
+                <p className="text-red-700 text-sm text-center">{error}</p>
+              </div>
+            )}
 
-            <form onSubmit={handleSubmit(handleExternalAuthSubmit)} className="mt-4 space-y-4">
+            <form onSubmit={handleSubmit(handleExternalAuthSubmit)} className="mt-6 space-y-5">
               <input type="hidden" name="remember" value="true" />
-              <div className="rounded-md shadow-sm -space-y-px">
-                <div className="mb-4">
-                  <label htmlFor="clientId" className="sr-only">
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="clientId" className="block text-sm font-medium text-gray-700 mb-1">
                     Client ID
                   </label>
                   <input
@@ -181,15 +181,15 @@ const Login = () => {
                         message: 'Client ID must be at least 3 characters',
                       },
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 hover:border-emerald-400 transition-colors"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-gray-400 transition-colors"
                     placeholder="Enter Client ID"
                   />
                   {errors.clientId && (
-                    <p className="text-red-500 text-sm mt-1">{errors.clientId.message}</p>
+                    <p className="text-red-600 text-sm mt-1">{errors.clientId.message}</p>
                   )}
                 </div>
-                <div className="mb-6">
-                  <label htmlFor="clientSecret" className="sr-only">
+                <div>
+                  <label htmlFor="clientSecret" className="block text-sm font-medium text-gray-700 mb-1">
                     Client Secret
                   </label>
                   <input
@@ -202,11 +202,11 @@ const Login = () => {
                         message: 'Client Secret must be at least 6 characters',
                       },
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 hover:border-emerald-400 transition-colors"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-gray-400 transition-colors"
                     placeholder="Enter Client Secret"
                   />
                   {errors.clientSecret && (
-                    <p className="text-red-500 text-sm mt-1">{errors.clientSecret.message}</p>
+                    <p className="text-red-600 text-sm mt-1">{errors.clientSecret.message}</p>
                   )}
                 </div>
               </div>
@@ -214,7 +214,7 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2 px-4 bg-emerald-500 text-white font-semibold rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2 px-4 bg-emerald-600 text-white font-semibold rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center">

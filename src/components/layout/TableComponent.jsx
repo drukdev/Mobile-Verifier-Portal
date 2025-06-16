@@ -1,5 +1,5 @@
 import React from "react";
-import { FaArrowUp, FaArrowDown } from "react-icons/fa";
+import { FaArrowUp, FaArrowDown, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,6 +8,23 @@ import {
   getSortedRowModel,
   flexRender,
 } from "@tanstack/react-table";
+
+// Enhanced global filter function that searches all column values
+const globalFilterFn = (row, columnId, value) => {
+  const search = value.toLowerCase();
+  
+  // Get all cell values from the row
+  const rowValues = Object.values(row.original).map(val => {
+    if (val === null || val === undefined) return '';
+    if (typeof val === 'object') {
+      return JSON.stringify(val).toLowerCase();
+    }
+    return String(val).toLowerCase();
+  });
+  
+  // Check if any cell value contains the search term
+  return rowValues.some(cellValue => cellValue.includes(search));
+};
 
 const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
   const table = useReactTable({
@@ -21,32 +38,35 @@ const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    globalFilterFn: globalFilterFn, // Use custom global filter function
     initialState: {
       pagination: {
         pageSize: 5,
       },
     },
+    // Ensure all columns are filterable
+    columnResizeMode: 'onChange',
+    enableGlobalFilter: true,
   });
 
   return (
-    <div className="">
-      {/* Wrapper div for proper rounded corners */}
-      <div className="overflow-hidden rounded-lg border border-gray-0">
-        <table className="w-full text-sm border-collapse">
-          <thead>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="bg-gray-100 text-left">
+              <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="p-2 pl-4 border border-gray-300 font-medium text-gray-700 text-sm"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150"
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     <div className="flex items-center">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                       {{
-                        asc: <FaArrowUp className="ml-1" />,
-                        desc: <FaArrowDown className="ml-1" />,
+                        asc: <FaArrowUp className="ml-1 text-emerald-600" size={12} />,
+                        desc: <FaArrowDown className="ml-1 text-emerald-600" size={12} />,
                       }[header.column.getIsSorted()] ?? null}
                     </div>
                   </th>
@@ -54,92 +74,101 @@ const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
               </tr>
             ))}
           </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row, index) => (
-              <tr
-                key={row.id}
-                className={`hover:bg-gray-50 ${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                }`}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="p-2 border border-gray-300 text-gray-700 text-sm"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+          <tbody className="bg-white divide-y divide-gray-200">
+            {table.getRowModel().rows.length === 0 ? (
+              <tr>
+                <td 
+                  colSpan={columns.length} 
+                  className="px-6 py-8 text-center text-sm text-gray-500"
+                >
+                  {globalFilter ? 'No results found for your search.' : 'No data available.'}
+                </td>
               </tr>
-            ))}
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <tr key={row.id} className="hover:bg-gray-50 transition-colors duration-150">
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination (unchanged) */}
-      <div className="pagination mt-4 flex justify-between items-center">
-        <div className="flex gap-2">
+      <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
-            className="px-3 py-1.5 bg-emerald-400 text-white rounded-md text-sm font-medium hover:bg-green-700 transition-colors disabled:bg-green-300 disabled:cursor-not-allowed"
+            className="p-1.5 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="First page"
           >
-            {"<<"}
+            <FaChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="px-3 py-1.5 bg-emerald-400 text-white rounded-md text-sm font-medium hover:bg-green-700 transition-colors disabled:bg-green-300 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Previous page"
           >
-            {"<"}
+            Previous
           </button>
+          <span className="text-sm text-gray-700 mx-2">
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          </span>
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="px-3 py-1.5 bg-emerald-400 text-white rounded-md text-sm font-medium hover:bg-green-700 transition-colors disabled:bg-green-300 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Next page"
           >
-            {">"}
+            Next
           </button>
           <button
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
-            className="px-3 py-1.5 bg-emerald-400 text-white rounded-md text-sm font-medium hover:bg-green-700 transition-colors disabled:bg-green-300 disabled:cursor-not-allowed"
+            className="p-1.5 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Last page"
           >
-            {">>"}
+            <FaChevronRight className="h-4 w-4" />
           </button>
         </div>
+        
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-700">
-            Page{" "}
-            <strong>
-              {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-            </strong>{" "}
-          </span>
-          <span className="text-sm text-gray-700">
-          |  Go to page:{" "}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700">Show:</span>
+            <select
+              value={table.getState().pagination.pageSize}
+              onChange={(e) => table.setPageSize(Number(e.target.value))}
+              className="pl-2 pr-8 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+              aria-label="Rows per page"
+            >
+              {[5, 10, 20, 30, 40, 50].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>
+                  {pageSize}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700">Go to:</span>
             <input
               type="number"
+              min="1"
+              max={table.getPageCount()}
               defaultValue={table.getState().pagination.pageIndex + 1}
               onChange={(e) => {
                 const page = e.target.value ? Number(e.target.value) - 1 : 0;
                 table.setPageIndex(page);
               }}
-              className="w-16 px-2 py-1 border border-emerald-400 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="w-16 px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+              aria-label="Page number"
             />
-          </span>
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => {
-              table.setPageSize(Number(e.target.value));
-            }}
-            className="px-2 py-1 border border-emerald-400 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          >
-            {[5, 10, 20, 30, 40, 50].map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                Show {pageSize}
-              </option>
-            ))}
-          </select>
+          </div>
         </div>
       </div>
     </div>
