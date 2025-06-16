@@ -19,11 +19,9 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
   useEffect(() => {
     if (organization) {
       console.log(`Full organization object:`, organization);
-      console.log(`Authentication object:`, organization.authentication);
-      
+      console.log(`Authentication object:`, organization.authentication); 
       // More defensive access to nested properties
       const authData = organization.authentication?.data || {};
-      
       setFormData({
         organizationName: organization.orgName || "",
         organizationId: organization.orgId || "",
@@ -35,7 +33,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
         authenticationUrl: authData.url || organization.authenticationUrl || "",
         publicDid: organization.publicDid || "",
       });
-      
       // Debug logging to see what values are actually being set
       console.log('Setting form data:', {
         organizationName: organization.orgName || "",
@@ -62,7 +59,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
         publicDid: "",
       });
     }
-    
     // Clear any existing errors when organization changes
     setErrors({});
   }, [organization, isOpen]); // Added isOpen to dependencies to ensure form resets when modal opens
@@ -77,7 +73,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    
     if (!formData.organizationName.trim()) {
       newErrors.organizationName = "Organization Name is required";
     }
@@ -134,14 +129,12 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
       };
 
       console.log('Submitting payload:', payload);
-      
       const token = localStorage.getItem("authToken");
       const auth_api_url = import.meta.env.VITE_AUTH_API_URL;
       const method = organization ? "PUT" : "POST";
       const url = organization 
         ? `${auth_api_url}/ndi-mobile-verifier/v1/organization/${organization.orgId}`
         : `${auth_api_url}/ndi-mobile-verifier/v1/organization`;
-      
       const response = await fetch(url, {
         method,
         headers: {
@@ -155,12 +148,10 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
         // Handle unauthorized - you might want to pass this up to parent
         throw new Error("Unauthorized");
       }
-      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || "Failed to save organization");
       }
-      
       if (onSuccess) onSuccess();
       onClose();
     } catch (error) {
@@ -234,7 +225,7 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
                     disabled={!!organization}
                     className={`w-full px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all font-mono text-sm ${
                       errors.organizationId ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 hover:border-emerald-300'
-                    } ${!!organization ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    } ${!organization ? 'opacity-60 cursor-not-allowed' : ''}`}
                   />
                   {errors.organizationId && (
                     <div className="flex items-center text-red-600 text-xs mt-1">

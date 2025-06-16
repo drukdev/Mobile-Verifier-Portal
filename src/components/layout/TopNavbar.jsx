@@ -9,7 +9,7 @@ const TopNavbar = ({ title, isSidebarCollapsed }) => {
   return (
     <>
       {/* Main Top Navigation */}
-      <div 
+      <div
       className= "bg-white-400 border-b border-gray-200 ml-0 py-7 p-4 mb-1 flex justify-between items-center sticky top-0 z-10 transition-all duration-300">
         {/* Title moved completely left with no extra spacing */}
         <h1 className="text-xl font-bold flex items-center">
@@ -23,25 +23,24 @@ const TopNavbar = ({ title, isSidebarCollapsed }) => {
         <div className="flex items-center space-x-4">
           <div className="hidden sm:flex items-center space-x-2 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
             <div className="h-2 w-2 rounded-full bg-teal-500 animate-pulse"></div>
-            <span className="text-xs font-semibold text-emerald-700 capitalize"> Logged In As: 
+            <span className="text-xs font-semibold text-emerald-700 capitalize"> Logged In As:
               {role}
             </span>
           </div>
     {/* BUtton */}
         </div>
       </div>
-      {/* Fixed Bottom Navigation */}
-      <div 
+      <div
         className="fixed  bottom-0 bg-white-400 border-t border-gray-200 py-3 w-screen transition-all duration-300">
         <div className="flex flex-col  justify-evenly bg-white-400 pl-0 sm:flex-row ml-1  gap-1">
           <div className="flex justify-start gap-1 sm:gap-6">
-            <button 
+            <button
               onClick={() => navigate('/dashboard/privacy-policy')}
               className="text-xs text-gray-500 hover:text-emerald-600 cursor-pointer transition-colors whitespace-nowrap"
             >
               Privacy Policy
             </button>
-            <button 
+            <button
               onClick={() => navigate('/dashboard/terms-of-service')}
               className="text-xs text-gray-500 hover:text-emerald-600 cursor-pointer transition-colors whitespace-nowrap"
             >

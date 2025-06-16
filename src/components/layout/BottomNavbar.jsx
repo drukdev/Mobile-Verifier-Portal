@@ -9,38 +9,34 @@ const BottomNavbar = ({ isSidebarCollapsed }) => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-30 shadow-lg h-20">
-      <div 
+      <div
         className={`flex flex-col sm:flex-row items-center justify-between py-3 h-full max-w-7xl mx-auto gap-3 transition-all duration-300 ${
           isSidebarCollapsed ? 'px-6' : 'pl-2 pr-6'
         }`}
       >
         {/* Navigation Links */}
         <div className="flex flex-wrap justify-center sm:justify-start gap-4 sm:gap-6">
-          <button 
+          <button
             onClick={() => navigate('/dashboard/terms-of-service')}
             className="text-sm text-slate-600 hover:text-emerald-600 font-medium transition-colors duration-200"
           >
             Terms of Service
           </button>
-          <button 
+          <button
             onClick={() => navigate('/dashboard/contact-support')}
             className="text-sm text-slate-600 hover:text-emerald-600 font-medium transition-colors duration-200"
           >
             Contact Support
           </button>
         </div>
-        
-        {/* Privacy Policy - positioned near sidebar */}
         <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-          <button 
+          <button
             onClick={() => navigate('/dashboard/privacy-policy')}
             className="text-sm text-slate-600 hover:text-emerald-600 font-medium transition-colors duration-200"
           >
             Privacy Policy
           </button>
         </div>
-                
-        {/* Logout and Version Info */}
         <div className="flex items-center space-x-6">
           <button
             onClick={logout}

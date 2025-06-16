@@ -21,12 +21,10 @@ const MainModal = ({
 
   // Group schemas by ID
   const groupedSchemas = useMemo(() => {
-    const groupsMap = {};
-    
+    const groupsMap = {}; 
     schemas.forEach((group, groupIndex) => {
       group.schemas.forEach(schema => {
         const id = schema.schemaId;
-        
         if (!groupsMap[id]) {
           groupsMap[id] = {
             ...schema,
@@ -45,7 +43,6 @@ const MainModal = ({
         }
       });
     });
-    
     return Object.values(groupsMap);
   }, [schemas]);
 
@@ -69,7 +66,6 @@ const MainModal = ({
 
   const handleRoleSelection = (roleId) => {
     if (viewMode) return;
-    
     if (selectedRoles.includes(roleId)) {
       setSelectedRoles(selectedRoles.filter((id) => id !== roleId));
     } else {
@@ -79,7 +75,6 @@ const MainModal = ({
 
   const handleFormSubmit = (data) => {
     if (viewMode) return;
-    
     if (selectedRoles.length === 0) {
       alert("At least one role must be selected");
       return;
@@ -145,8 +140,8 @@ const MainModal = ({
                           : 'border-gray-200 hover:border-emerald-300 bg-gray-50 focus:bg-white focus:ring-emerald-500'
                     }`}
                     placeholder="Enter template name"
-                    {...register("template_name", { 
-                      required: !viewMode && "Template Name is required" 
+                    {...register("template_name", {
+                      required: !viewMode && "Template Name is required"
                     })}
                   />
                   {errors.template_name && (
@@ -173,8 +168,8 @@ const MainModal = ({
                           : 'border-gray-200 hover:border-emerald-300 bg-gray-50 focus:bg-white focus:ring-emerald-500'
                     }`}
                     placeholder="template_001"
-                    {...register("template_id", { 
-                      required: !viewMode && "Template ID is required" 
+                    {...register("template_id", {
+                      required: !viewMode && "Template ID is required"
                     })}
                   />
                   {errors.template_id && (
@@ -213,15 +208,14 @@ const MainModal = ({
                           : "Select roles"}
                       </span>
                       {!viewMode && (
-                        <ChevronDown 
-                          size={16} 
+                        <ChevronDown
+                          size={16}
                           className={`text-gray-400 transition-transform duration-200 ${
                             isRoleDropdownOpen ? 'rotate-180' : ''
-                          }`} 
+                          }`}
                         />
                       )}
                     </button>
-                    
                     {isRoleDropdownOpen && !viewMode && (
                       <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                         <div className="p-1">
@@ -255,7 +249,6 @@ const MainModal = ({
                       </div>
                     )}
                   </div>
-                  
                   {selectedRoles.length > 0 && (
                     <div className="mt-2">
                       <div className="flex flex-wrap gap-1">
@@ -272,7 +265,6 @@ const MainModal = ({
                       </div>
                     </div>
                   )}
-                  
                   {errors.role && (
                     <div className="flex items-center text-red-600 text-xs mt-1">
                       <AlertCircle size={12} className="mr-1" />
@@ -333,8 +325,8 @@ const MainModal = ({
                         : 'border-gray-200 hover:border-emerald-300 bg-gray-50 focus:bg-white focus:ring-emerald-500'
                   }`}
                   placeholder="Describe the purpose and use case of this proof template..."
-                  {...register("description", { 
-                    required: !viewMode && "Description is required" 
+                  {...register("description", {
+                    required: !viewMode && "Description is required"
                   })}
                 />
                 {errors.description && (
@@ -433,10 +425,10 @@ const MainModal = ({
                   </div>
                 </div>
               ) : (
-                <div 
+                <div
                   className={`text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 transition-colors ${
                     !viewMode ? "cursor-pointer hover:bg-gray-100" : ""
-                  }`} 
+                  }`}
                   onClick={!viewMode ? (e) => { e.preventDefault(); openSchemaModal(); } : undefined}
                 >
                   <div className="text-emerald-600 mb-2">

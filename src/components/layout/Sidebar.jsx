@@ -79,7 +79,7 @@ const Sidebar = ({ onToggle }) => {
         </div>
 
         {/* Navigation Items */}
-        <div 
+        <div
           className="flex-1 pt-4"
           onMouseEnter={() => setIsNavHovered(true)}
           onMouseLeave={() => setIsNavHovered(false)}
@@ -113,7 +113,7 @@ const Sidebar = ({ onToggle }) => {
                     shouldShowLabel={shouldExpand}
                   />
                 </>
-              )} 
+              )}
               {role === 'admin' && (
                 <>
                 <NavItem
@@ -123,7 +123,7 @@ const Sidebar = ({ onToggle }) => {
                   active={location.pathname === '/dashboard/create-organization'}
                   isCollapsed={isCollapsed}
                   shouldShowLabel={shouldExpand}
-                /> 
+                />
               <NavItem
                 icon={<FaFileUpload className="text-emerald-500 group-hover:text-emerald-600" />}
                 label="Upload Schema File"
@@ -142,13 +142,12 @@ const Sidebar = ({ onToggle }) => {
                 isCollapsed={isCollapsed}
                 shouldShowLabel={shouldExpand}
               />
-             
             </ul>
           </nav>
         </div>
 
         {/* Logout Button */}
-         <div 
+         <div
           className={`border-t mb-[0.3rem] border-gray-200 ${isCollapsed ? 'px-2' : 'px-4'} py-1`}
           onMouseEnter={() => setIsNavHovered(true)}
           onMouseLeave={() => setIsNavHovered(false)}

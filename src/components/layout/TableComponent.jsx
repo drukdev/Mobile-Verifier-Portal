@@ -12,7 +12,6 @@ import {
 // Enhanced global filter function that searches all column values
 const globalFilterFn = (row, columnId, value) => {
   const search = value.toLowerCase();
-  
   // Get all cell values from the row
   const rowValues = Object.values(row.original).map(val => {
     if (val === null || val === undefined) return '';
@@ -21,7 +20,6 @@ const globalFilterFn = (row, columnId, value) => {
     }
     return String(val).toLowerCase();
   });
-  
   // Check if any cell value contains the search term
   return rowValues.some(cellValue => cellValue.includes(search));
 };
@@ -77,8 +75,8 @@ const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
           <tbody className="bg-white divide-y divide-gray-200">
             {table.getRowModel().rows.length === 0 ? (
               <tr>
-                <td 
-                  colSpan={columns.length} 
+                <td
+                  colSpan={columns.length}
                   className="px-6 py-8 text-center text-sm text-gray-500"
                 >
                   {globalFilter ? 'No results found for your search.' : 'No data available.'}
@@ -137,7 +135,6 @@ const TableComponent = ({ columns, data, globalFilter, setGlobalFilter }) => {
             <FaChevronRight className="h-4 w-4" />
           </button>
         </div>
-        
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-700">Show:</span>

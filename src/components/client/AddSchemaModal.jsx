@@ -14,7 +14,6 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
 
   const base_api_url = import.meta.env.VITE_API_BASE_URL;
 
-  // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery("");
@@ -27,7 +26,6 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
     }
   }, [isOpen]);
 
-  // Debounced search function
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim()) {
@@ -42,7 +40,6 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Get all existing attribute names across all schemas
   const getAllExistingAttributeNames = () => {
     const allAttributes = [];
     existingSchemas.forEach(group => {
@@ -53,7 +50,6 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
     return allAttributes;
   };
 
-  // Fetch autocomplete results
   const fetchAutoCompleteResults = async (query) => {
     setIsLoading(true);
     const token = localStorage.getItem("authToken");
@@ -82,7 +78,6 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
     }
   };
 
-  // Fetch schema details when an option is selected
   const fetchSchemaDetails = async (selectedOption) => {
     setIsFetchingDetails(true);
     const token = localStorage.getItem("authToken");
@@ -103,7 +98,6 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
       }
 
       const result = await response.json();
-      
       if (result.data?.result?.length > 0) {
         const processedSchemas = result.data.result.map(schema => {
           let parsedAttributes = [];
@@ -137,7 +131,6 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
   const handleAttributeSelect = (schemaId, attribute) => {
     setSelectedAttributes(prev => {
       const currentAttributes = prev[schemaId] || [];
-      
       if (currentAttributes.includes(attribute)) {
         // Remove attribute if already selected
         return {
@@ -174,7 +167,6 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
     const duplicateAttributes = selectedAttrs.filter(attr => 
       existingAttributes.includes(attr)
     );
-    
     if (duplicateAttributes.length > 0) {
       toast.warning(
         `The following attributes already exist: ${duplicateAttributes.join(", ")}`
@@ -186,7 +178,6 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
     const filteredAttributes = item.attributes.filter(attr => 
       selectedAttrs.includes(attr.name)
     );
-    
     const schemaData = {
       name: item.schemaName,
       schemas: [{
@@ -200,7 +191,6 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
 
     saveSchema(schemaData);
     toast.success(`Added ${selectedAttrs.length} attribute(s) from ${item.schemaName}`);
-    
     // Clear selection for this schema
     setSelectedAttributes(prev => {
       const newState = {...prev};
@@ -255,7 +245,6 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
                   )}
                 </div>
               </div>
-              
               {showDropdown && searchResults.length > 0 && (
                 <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
                   {searchResults.map((item, index) => (
@@ -296,14 +285,12 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
                     Click attributes to select, then add to template
                   </div>
                 </div>
-                
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {schemaDetails.map((item, index) => {
                     const currentSelectedAttrs = selectedAttributes[item.schemaId] || [];
                     const existingAttributes = getAllExistingAttributeNames();
-                    
                     return (
-                      <div 
+                      <div
                         key={`${item.schemaId}-${index}`} 
                         className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
                       >
@@ -315,15 +302,12 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
                           <span className="bg-emerald-100 text-emerald-800 px-1 py-1 rounded-full text-xs">
                               {item.version}
                             </span>
-                          
                         </div>
                         <div className="mt-1 p-2 text-xs text-gray-500">
-                            
                             <span className="flex-wrap max-w-32" title={item.schemaId}>
                               <b className="text-black">ID</b>: {item.schemaId}
                             </span>
                           </div>
-                        
                         {/* Attributes Section */}
                         <div className="p-2">
                           <div className="flex items-center justify-between mb-1">
@@ -336,14 +320,12 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
                               </span>
                             )}
                           </div>
-                          
                           <div className="max-h-32 overflow-y-auto mb-4">
                             <div className="flex flex-wrap gap-1">
                               {item.attributeNames.map((attr, idx) => {
                                 const isSelected = currentSelectedAttrs.includes(attr);
                                 const isHighlighted = attr === highlightedAttribute;
                                 const isAdded = existingAttributes.includes(attr);
-                                
                                 return (
                                   <button
                                     key={idx} 
@@ -408,7 +390,7 @@ const AddSchemaModal = ({ isOpen, onClose, saveSchema, existingSchemas = [] }) =
                     {searchQuery ? "No schemas found" : "Search to get started"}
                   </h3>
                   <p className="text-gray-500">
-                    {searchQuery 
+                    {searchQuery
                       ? "Try adjusting your search terms or check the spelling." 
                       : "Enter a search term above to find and add schemas to your template."}
                   </p>

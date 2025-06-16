@@ -19,17 +19,13 @@ const Dashboard = () => {
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
       <Sidebar onToggle={(isCollapsed) => setIsSidebarCollapsed(isCollapsed)} />
 
-      {/* Main Content */}
       <div className="flex-1 p-1 flex flex-col transition-all duration-300">
-        {/* Top Navbar with Dynamic Title */}
         <TopNavbar title={getTitleFromPath(location.pathname)} />
 
-        {/* Dashboard Content */}
         <div className="flex-1 p-1 bg-white-500">
-          <Outlet /> {/* This will render the nested routes */}
+          <Outlet />
         </div>
       </div>
     </div>
