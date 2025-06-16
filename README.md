@@ -1,4 +1,3 @@
-Mobile Verifier Portal
 A Mobile Verifier Web Portal, built with React, Vite, and Tailwind CSS.
 
 Functional Feature:
@@ -18,6 +17,7 @@ Clone the repository
 
 Install dependencies:
 
+cd to cloned-repo
 pnpm install
 pnpm start: Runs the app in development mode
 pnpm build: Builds the app for production
@@ -28,24 +28,11 @@ Environment Variables
 This project uses dotenv for environment variables. Create a .env file in the root directory with your configuration:
 
 VITE_AUTH_API_URL= Get it from NDI
-VITE_API_BASE_URL= Your Service URL
+VITE_API_BASE_URL= Get it from NDI
 VITE_WEBHOOK_URL= Get it from NDI
 
-Technologies Used
 
-Contributing
-Fork the project
 
-Create your feature branch (git checkout -b feature/AmazingFeature)
-
-Commit your changes (git commit -m 'Add some AmazingFeature')
-
-Push to the branch (git push origin feature/AmazingFeature)
-
-Open a Pull Request
-
-License
-This project is private and proprietary. All rights reserved.
 
 
 If You Prefer npm/yarn (not recommended):
