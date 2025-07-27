@@ -7,7 +7,11 @@ import {
   FaUsers,
   FaUserCheck,
   FaFileAlt,
-  FaFileUpload
+  FaFileUpload,
+  FaShieldAlt,
+  FaCheckCircle,
+  FaUsersCog,
+  FaCogs,
 } from 'react-icons/fa';
 
 import { RiOrganizationChart } from 'react-icons/ri';
@@ -34,6 +38,104 @@ const Sidebar = ({ onToggle }) => {
 
   const shouldExpand = isNavHovered && isCollapsed;
 
+  const navItems = [
+    {
+      group: 'Mobile Verifier',
+      icon: <FaUsers className="text-emerald-500 group-hover:text-emerald-600" />,
+      items: [
+        {
+          icon: <FaUserCheck className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'Verifier User',
+          path: '/dashboard/verifier-user',
+        },
+        {
+          icon: <FaUsers className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'Verifier Role',
+          path: '/dashboard/verifier-role',
+        },
+        {
+          icon: <FaFileAlt className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'Proof Templates',
+          path: '/dashboard/proof-templates',
+        },
+      ],
+    },
+    {
+      group: 'Issuer',
+      icon: <FaShieldAlt className="text-emerald-500 group-hover:text-emerald-600" />,
+      items: [
+        {
+          icon: <RiOrganizationChart className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'Create Organization',
+          path: '/dashboard/create-organization',
+        },
+        {
+          icon: <FaFileUpload className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'Dummy Item 1',
+          path: '/dashboard/dummy-1',
+        },
+        {
+          icon: <FaFileUpload className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'Dummy Item 2',
+          path: '/dashboard/dummy-2',
+        },
+      ],
+    },
+    {
+      group: 'Verifier',
+      icon: <FaCheckCircle className="text-emerald-500 group-hover:text-emerald-600" />,
+      items: [
+        {
+          icon: <FaFileUpload className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'Dummy Item 1',
+          path: '/dashboard/dummy-3',
+        },
+        {
+          icon: <FaFileUpload className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'Dummy Item 2',
+          path: '/dashboard/dummy-4',
+        },
+      ],
+    },
+    {
+      group: 'User Management',
+      icon: <FaUsersCog className="text-emerald-500 group-hover:text-emerald-600" />,
+      items: [
+        {
+          icon: <FaFileUpload className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'Dummy Item 1',
+          path: '/dashboard/dummy-5',
+        },
+        {
+          icon: <FaFileUpload className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'Dummy Item 2',
+          path: '/dashboard/dummy-6',
+        },
+      ],
+    },
+    {
+      group: 'Settings',
+      icon: <FaCogs className="text-emerald-500 group-hover:text-emerald-600" />,
+      items: [
+        {
+          icon: <FaQuestion className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'FAQ',
+          path: '/dashboard/faq',
+        },
+        {
+          icon: <FaFileUpload className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'Dummy Item 1',
+          path: '/dashboard/dummy-7',
+        },
+        {
+          icon: <FaFileUpload className="text-emerald-500 group-hover:text-emerald-600" />,
+          label: 'Dummy Item 2',
+          path: '/dashboard/dummy-8',
+        },
+      ],
+    },
+  ];
+
   return (
     <div className="relative">
       <div
@@ -44,7 +146,6 @@ const Sidebar = ({ onToggle }) => {
           className="absolute -right-4 top-6 bg-white p-2 rounded-full shadow-lg hover:bg-emerald-50 hover:shadow-xl transition-all duration-200 group"
           onClick={toggleSidebar}
         >
-
           {isCollapsed ? (
             <FaChevronRight size={16} className="text-emerald-500 text-lg group-hover:text-emerald-600" />
           ) : (
@@ -86,68 +187,21 @@ const Sidebar = ({ onToggle }) => {
         >
           <nav className={`px-3 py-4 ${isCollapsed ? 'pt-6' : 'pt-2'}`}>
             <ul className="space-y-1">
-              {role === 'client' && (
-                <>
-                  <NavItem
-                    icon={<FaUsers className="text-emerald-500 group-hover:text-emerald-600" />}
-                    label="Verifier Role"
-                    path="/dashboard/verifier-role"
-                    active={location.pathname === '/dashboard/verifier-role'}
-                    isCollapsed={isCollapsed}
-                    shouldShowLabel={shouldExpand}
-                  />
-                  <NavItem
-                    icon={<FaUserCheck className="text-emerald-500 group-hover:text-emerald-600" />}
-                    label="Verifier User"
-                    path="/dashboard/verifier-user"
-                    active={location.pathname === '/dashboard/verifier-user'}
-                    isCollapsed={isCollapsed}
-                    shouldShowLabel={shouldExpand}
-                  />
-                  <NavItem
-                    icon={<FaFileAlt className="text-emerald-500 group-hover:text-emerald-600" />}
-                    label="Proof Templates"
-                    path="/dashboard/proof-templates"
-                    active={location.pathname === '/dashboard/proof-templates'}
-                    isCollapsed={isCollapsed}
-                    shouldShowLabel={shouldExpand}
-                  />
-                </>
-              )}
-              {role === 'admin' && (
-                <>
-                <NavItem
-                  icon={<RiOrganizationChart className="text-emerald-500 group-hover:text-emerald-600" />}
-                  label="Create Organization"
-                  path="/dashboard/create-organization"
-                  active={location.pathname === '/dashboard/create-organization'}
+              {navItems.map((group, index) => (
+                <NavGroup
+                  key={index}
+                  group={group}
                   isCollapsed={isCollapsed}
                   shouldShowLabel={shouldExpand}
+                  location={location}
                 />
-              <NavItem
-                icon={<FaFileUpload className="text-emerald-500 group-hover:text-emerald-600" />}
-                label="Upload Schema File"
-                path="/dashboard/schema-upload"
-                active={location.pathname === '/dashboard/schema-upload'}
-                isCollapsed={isCollapsed}
-                shouldShowLabel={shouldExpand}
-              />
-              </>
-              )}
-              <NavItem
-                icon={<FaQuestion className="text-emerald-500 group-hover:text-emerald-600" />}
-                label="FAQ"
-                path="/dashboard/faq"
-                active={location.pathname === '/dashboard/faq'}
-                isCollapsed={isCollapsed}
-                shouldShowLabel={shouldExpand}
-              />
+              ))}
             </ul>
           </nav>
         </div>
 
         {/* Logout Button */}
-         <div
+        <div
           className={`border-t mb-[0.3rem] border-gray-200 ${isCollapsed ? 'px-2' : 'px-4'} py-1`}
           onMouseEnter={() => setIsNavHovered(true)}
           onMouseLeave={() => setIsNavHovered(false)}
@@ -168,6 +222,58 @@ const Sidebar = ({ onToggle }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+const NavGroup = ({ group, isCollapsed, shouldShowLabel, location }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const isActive = group.items.some(item => location.pathname === item.path);
+
+  const handleToggle = () => {
+    setIsOpen(!isOpen);
+  };
+
+  return (
+    <li>
+      <div
+        onClick={handleToggle}
+        className={`flex items-center px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 group ${
+          isActive ? 'bg-emerald-50 text-emerald-600 font-medium' : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-600'
+        }`}
+      >
+        <div className="flex items-center">
+          <span className={`transition-transform duration-200 ${isActive ? '' : 'group-hover:scale-110'}`}>
+            {group.icon}
+          </span>
+          {(!isCollapsed || shouldShowLabel) && (
+            <span className={`ml-3 transition-transform duration-200 ${isActive ? '' : 'group-hover:translate-x-1'}`}>
+              {group.group}
+            </span>
+          )}
+        </div>
+        {(!isCollapsed || shouldShowLabel) && (
+          <FaChevronDown
+            className={`ml-auto transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          />
+        )}
+      </div>
+      {isOpen && (!isCollapsed || shouldShowLabel) && (
+        <ul className="pl-8 space-y-1 mt-1">
+          {group.items.map((item, index) => (
+            <NavItem
+              key={index}
+              icon={item.icon}
+              label={item.label}
+              path={item.path}
+              active={location.pathname === item.path}
+              isCollapsed={isCollapsed}
+              shouldShowLabel={shouldShowLabel}
+            />
+          ))}
+        </ul>
+      )}
+    </li>
   );
 };
 
