@@ -18,9 +18,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
 
   useEffect(() => {
     if (organization) {
-      console.log(`Full organization object:`, organization);
-      console.log(`Authentication object:`, organization.authentication); 
-      // More defensive access to nested properties
       const authData = organization.authentication?.data || {};
       setFormData({
         organizationName: organization.orgName || "",
@@ -33,20 +30,7 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
         authenticationUrl: authData.url || organization.authenticationUrl || "",
         publicDid: organization.publicDid || "",
       });
-      // Debug logging to see what values are actually being set
-      console.log('Setting form data:', {
-        organizationName: organization.orgName || "",
-        organizationId: organization.orgId || "",
-        logoUrl: organization.logoURL || organization.logoUrl || "",
-        serviceUrl: organization.url || organization.serviceUrl || "",
-        clientId: authData.client_id || organization.clientId || "",
-        clientSecret: authData.client_secret || organization.clientSecret || "",
-        grantType: authData.grant_type || organization.grantType || "",
-        authenticationUrl: authData.url || organization.authenticationUrl || "",
-        publicDid: organization.publicDid || "",
-      });
     } else {
-      // Reset form for new organization
       setFormData({
         organizationName: "",
         organizationId: "",
@@ -59,9 +43,8 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
         publicDid: "",
       });
     }
-    // Clear any existing errors when organization changes
     setErrors({});
-  }, [organization, isOpen]); // Added isOpen to dependencies to ensure form resets when modal opens
+  }, [organization, isOpen]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -128,11 +111,10 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
         authentication: auth
       };
 
-      console.log('Submitting payload:', payload);
       const token = localStorage.getItem("authToken");
       const auth_api_url = import.meta.env.VITE_AUTH_API_URL;
       const method = organization ? "PUT" : "POST";
-      const url = organization 
+      const url = organization
         ? `${auth_api_url}/ndi-mobile-verifier/v1/organization/${organization.orgId}`
         : `${auth_api_url}/ndi-mobile-verifier/v1/organization`;
       const response = await fetch(url, {
@@ -145,7 +127,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
       });
 
       if (response.status === 401) {
-        // Handle unauthorized - you might want to pass this up to parent
         throw new Error("Unauthorized");
       }
       if (!response.ok) {
@@ -156,8 +137,6 @@ const AddOrganizationModal = ({ isOpen, onClose, organization, onSuccess }) => {
       onClose();
     } catch (error) {
       console.error('Error saving organization:', error);
-      // You might want to show an error toast here
-      // toast.error(error.message);
     }
   };
 
