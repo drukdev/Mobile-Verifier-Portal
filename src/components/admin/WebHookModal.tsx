@@ -128,12 +128,10 @@ const WebHookModal = ({ isOpen, onClose, organization, onSuccess }) => {
       }
 
       const responseData = await response.json();
-      //toast.success(`Webhook ${responseData.data.webhookId} registered successfully!`);
       onSuccess(responseData.data);
       onClose();
     } catch (error) {
       toast.error(error.message || "An error occurred during registration");
-      console.error("Registration error:", error);
     } finally {
       setIsLoading(false);
     }
